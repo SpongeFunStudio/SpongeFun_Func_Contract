@@ -9,10 +9,10 @@ export type SpongeBobJettonMinterConfig = {
     max_supply: number;
     mintable: boolean;
     admin_address: Address,
-    airdrop_contract_address: Address,
-    public_sale_contract_address: Address,
-    team_contract_address: Address,
-    treasury_contract_address: Address,
+    // airdrop_contract_address: Address,
+    // public_sale_contract_address: Address,
+    // team_contract_address: Address,
+    // treasury_contract_address: Address,
     jetton_wallet_code: Cell,
     jetton_content: Cell | JettonMinterContent
 };
@@ -24,10 +24,10 @@ export function spongeBobJettonMinterConfigToCell(config: SpongeBobJettonMinterC
             .storeBit(config.mintable)
             .storeCoins(config.max_supply)
             .storeAddress(config.admin_address)
-            .storeAddress(config.airdrop_contract_address)
-            .storeAddress(config.public_sale_contract_address)
-            .storeAddress(config.team_contract_address)
-            .storeAddress(config.treasury_contract_address)
+            // .storeAddress(config.airdrop_contract_address)
+            // .storeAddress(config.public_sale_contract_address)
+            // .storeAddress(config.team_contract_address)
+            // .storeAddress(config.treasury_contract_address)
             .storeRef(config.jetton_wallet_code)
             .storeRef(content)
             .endCell();
