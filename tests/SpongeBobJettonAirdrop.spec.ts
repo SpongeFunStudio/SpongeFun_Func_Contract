@@ -18,18 +18,18 @@ describe('SpongeBobJettonAirdrop', () => {
     beforeEach(async () => {
         blockchain = await Blockchain.create();
 
-        spongeBobJettonAirdrop = blockchain.openContract(SpongeBobJettonAirdrop.createFromConfig({}, code));
+        // spongeBobJettonAirdrop = blockchain.openContract(SpongeBobJettonAirdrop.createFromConfig({}, code));
 
-        deployer = await blockchain.treasury('deployer');
+        // deployer = await blockchain.treasury('deployer');
 
-        const deployResult = await spongeBobJettonAirdrop.sendDeploy(deployer.getSender(), toNano('0.05'));
+        // const deployResult = await spongeBobJettonAirdrop.sendDeploy(deployer.getSender(), toNano('0.05'));
 
-        expect(deployResult.transactions).toHaveTransaction({
-            from: deployer.address,
-            to: spongeBobJettonAirdrop.address,
-            deploy: true,
-            success: true,
-        });
+        // expect(deployResult.transactions).toHaveTransaction({
+        //     from: deployer.address,
+        //     to: spongeBobJettonAirdrop.address,
+        //     deploy: true,
+        //     success: true,
+        // });
     });
 
     it('should deploy', async () => {

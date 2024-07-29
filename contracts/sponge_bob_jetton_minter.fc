@@ -7,22 +7,15 @@
 ;; storage variables
 
 ;; total_supply:Coins 
+;; mintable:Bool
 ;; max_supply:Coins 
 ;; admin_address:MsgAddress 
-;; airdrop_contract_address:MsgAddress 
-;; public_sale_contract_address:MsgAddress 
-;; team_contract_address:MsgAddress 
-;; treasury_contract_address:MsgAddress 
 ;; jetton_wallet_code:^Cell 
 ;; metadata_uri:^Cell = Storage;
 global int total_supply;
 global int mintable;
 global int max_supply;
 global slice admin_address;
-;; global slice airdrop_contract_address;
-;; global slice public_sale_contract_address;
-;; global slice team_contract_address;
-;; global slice treasury_contract_address;
 global cell jetton_wallet_code;
 global cell metadata_uri;
 
@@ -41,10 +34,6 @@ const int TREASURY_PERCENTAGE = 2000;
     mintable = ds~load_bool();
     max_supply = ds~load_coins();
     admin_address = ds~load_msg_addr();
-    ;; airdrop_contract_address = ds~load_msg_addr();
-    ;; public_sale_contract_address = ds~load_msg_addr();
-    ;; team_contract_address = ds~load_msg_addr();
-    ;; treasury_contract_address = ds~load_msg_addr();
     jetton_wallet_code = ds~load_ref();
     metadata_uri = ds~load_ref();
 
@@ -59,17 +48,13 @@ const int TREASURY_PERCENTAGE = 2000;
             .store_bool(mintable)
             .store_coins(max_supply)
             .store_slice(admin_address)
-        ;; .store_slice(airdrop_contract_address)
-        ;; .store_slice(public_sale_contract_address)
-        ;; .store_slice(team_contract_address)
-        ;; .store_slice(treasury_contract_address)
             .store_ref(jetton_wallet_code)
             .store_ref(metadata_uri)
             .end_cell()
     );
 }
 
-() send_to_jetton_wallet(slice to_address, cell jetton_wallet_code, int ton_amount, cell master_msg, int need_state_init) impure inline {
+() mint_tokens(slice to_address, cell jetton_wallet_code, int ton_amount, cell master_msg, int need_state_init) impure inline {
     raw_reserve(ONE_TON, RESERVE_REGULAR); ;; reserve for storage fees
 
     cell state_init = calculate_jetton_wallet_state_init(to_address, my_address(), jetton_wallet_code);
@@ -134,8 +119,8 @@ const int TREASURY_PERCENTAGE = 2000;
 
         ;; airdrop amount must be equal to AIRDRP_PERCENTAGE of max_supply
         int jetton_amount = master_msg_slice~load_coins();
-        throw_unless(error::invalid_airdrop_amount, jetton_amount != max_supply * AIRDRP_PERCENTAGE / DENOMINATOR);
-        throw_unless(error::not_have_enough_amount, total_supply + jetton_amount > max_supply);
+        throw_unless(error::invalid_airdrop_amount, jetton_amount == max_supply * AIRDRP_PERCENTAGE / DENOMINATOR);
+        throw_unless(error::not_have_enough_amount, total_supply + jetton_amount <= max_supply);
 
         master_msg_slice~load_msg_addr(); ;; from_address
         master_msg_slice~load_msg_addr(); ;; response_address
@@ -145,7 +130,7 @@ const int TREASURY_PERCENTAGE = 2000;
         ;; a little more than needed, it’s ok since it’s sent by the admin and excesses will return back
         check_amount_is_enough_to_transfer(ton_amount, forward_ton_amount, fwd_fee);
 
-        send_to_jetton_wallet(to_address, jetton_wallet_code, ton_amount, master_msg, TRUE);
+        mint_tokens(to_address, jetton_wallet_code, ton_amount, master_msg, TRUE);
         total_supply += jetton_amount;
         if(total_supply == max_supply) {
             mintable = FALSE;
@@ -249,9 +234,9 @@ cell build_content_cell(slice metadata_uri) inline {
     return create_token_onchain_metadata(content_dict);
 }
 
-(int, int, slice, cell, cell) get_jetton_data() method_id {
+(int, int, int, slice, cell, cell) get_jetton_data() method_id {
     load_data();
-    return (total_supply, mintable, admin_address, build_content_cell(metadata_uri.begin_parse()), jetton_wallet_code);
+    return (total_supply, mintable, max_supply, admin_address, build_content_cell(metadata_uri.begin_parse()), jetton_wallet_code);
 }
 
 slice get_wallet_address(slice owner_address) method_id {

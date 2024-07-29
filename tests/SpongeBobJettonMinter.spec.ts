@@ -1,13 +1,14 @@
 import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
-import { Address, Cell, Dictionary, beginCell, toNano } from '@ton/core';
+import { Address, Cell, Dictionary, beginCell, storeStateInit, toNano } from '@ton/core';
 import { SpongeBobJettonMinter, jettonContentToCell } from '../wrappers/SpongeBobJettonMinter';
 import '@ton/test-utils';
 import { compile } from '@ton/blueprint';
 import { SpongeBobJettonWallet } from '../wrappers/SpongeBobJettonWallet';
+import { Op } from '../wrappers/JettonConstants';
 
 let blockchain: Blockchain;
 let deployer: SandboxContract<TreasuryContract>;
-// let airdrop: SandboxContract<TreasuryContract>;
+let airdrop: SandboxContract<TreasuryContract>;
 // let publicSale: SandboxContract<TreasuryContract>;
 // let team: SandboxContract<TreasuryContract>;
 // let treasury: SandboxContract<TreasuryContract>;
@@ -28,33 +29,24 @@ describe('SpongeBobJettonMinter', () => {
         blockchain = await Blockchain.create();
 
         deployer = await blockchain.treasury('deployer');
-        // airdrop = await blockchain.treasury('airdrop');
+        airdrop = await blockchain.treasury('airdrop');
+
         // publicSale = await blockchain.treasury('publicSale');
         // team = await blockchain.treasury('team');
         // treasury = await blockchain.treasury('treasury');
 
-        jwallet_code_raw = await compile('SpongeBobJettonWallet');
-        
-        const _libs = Dictionary.empty(Dictionary.Keys.BigUint(256), Dictionary.Values.Cell());
-        _libs.set(BigInt(`0x${jwallet_code_raw.hash().toString('hex')}`), jwallet_code_raw);
-        const libs = beginCell().storeDictDirect(_libs).endCell();
-        blockchain.libs = libs;
-        let lib_prep = beginCell().storeUint(2,8).storeBuffer(jwallet_code_raw.hash()).endCell();
-        jwallet_code = new Cell({ exotic: true, bits: lib_prep.bits, refs: lib_prep.refs });
-        
-        console.log('jetton wallet code hash = ', jwallet_code.hash().toString('hex'));
+        jwallet_code = await compile('SpongeBobJettonWallet');
 
-        spongeBobJettonMinter = blockchain.openContract(SpongeBobJettonMinter.createFromConfig({
-            max_supply: 1000000000,
-            mintable: true,
-            admin_address: deployer.address,
-            // airdrop_contract_address: airdrop.address,
-            // public_sale_contract_address: publicSale.address,
-            // team_contract_address: team.address,
-            // treasury_contract_address: treasury.address,
-            jetton_wallet_code: jwallet_code,
-            jetton_content: jettonContentToCell({uri: "https://ton.org/"})
-        }, code));
+        spongeBobJettonMinter = blockchain.openContract(
+            SpongeBobJettonMinter.createFromConfig({
+                    max_supply: 1_000_000_000,
+                    mintable: true,
+                    admin_address: deployer.address,
+                    jetton_wallet_code: jwallet_code,
+                    jetton_content: jettonContentToCell({uri: "https://ton.org/"})
+                },
+                code
+            ));
 
         userWallet = async (address:Address) => blockchain.openContract(
                           SpongeBobJettonWallet.createFromAddress(
@@ -82,5 +74,35 @@ describe('SpongeBobJettonMinter', () => {
     it('should deploy', async () => {
         // the check is done inside beforeEach
         // blockchain and spongeBobJettonMinter are ready to use
+    });
+
+    it('should mint airdrop jetton to airdrop_wallet', async () => {
+        const airdropValue = 350_000_000n;
+
+        const airdropWallet = await userWallet(airdrop.address);
+
+        const res = await spongeBobJettonMinter.sendMintToClaimAirdropMessage(
+            deployer.getSender(),
+            airdrop.address,
+            airdropValue,
+            null, null, null
+        );
+        expect(res.transactions).toHaveTransaction({
+            on: airdropWallet.address,
+            op: Op.internal_transfer,
+            success: true,
+        });
+
+        const curBalance = await airdropWallet.getJettonBalance();
+        expect(curBalance).toEqual(airdropValue);
+
+        const smc   = await blockchain.getContract(airdropWallet.address);
+        if(smc.accountState === undefined)
+            throw new Error("Can't access wallet account state");
+        if(smc.accountState.type !== "active")
+            throw new Error("Wallet account is not active");
+        if(smc.account.account === undefined || smc.account.account === null)
+            throw new Error("Can't access wallet account!");
+        console.log("Jetton wallet max storage stats:", smc.account.account.storageStats.used);
     });
 });

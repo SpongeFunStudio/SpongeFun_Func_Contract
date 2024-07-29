@@ -3,7 +3,8 @@ import { Op } from './JettonConstants';
 
 export type SpongeBobJettonWalletConfig = {
     ownerAddress: Address,
-    jettonMasterAddress: Address
+    jettonMasterAddress: Address,
+    jetton_wallet_code: Cell,
 };
 
 export function spongeBobJettonWalletConfigToCell(config: SpongeBobJettonWalletConfig): Cell {
@@ -11,6 +12,7 @@ export function spongeBobJettonWalletConfigToCell(config: SpongeBobJettonWalletC
         .storeCoins(0) // jetton balance
         .storeAddress(config.ownerAddress)
         .storeAddress(config.jettonMasterAddress)
+        .storeRef(config.jetton_wallet_code)
         .endCell();
 }
 
