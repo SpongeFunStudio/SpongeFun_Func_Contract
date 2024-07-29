@@ -12,6 +12,7 @@ const op::take_wallet_address = 0xd1735400;
 
 const op::top_up = 0xd372158c;
 
+const error::not_have_enough_amount = 70;
 const error::invalid_airdrop_amount = 71;
 const error::invalid_op = 72;
 const error::wrong_op = 0xffff;

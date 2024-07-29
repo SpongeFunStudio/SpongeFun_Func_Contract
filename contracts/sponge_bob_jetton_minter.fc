@@ -16,6 +16,7 @@
 ;; jetton_wallet_code:^Cell 
 ;; metadata_uri:^Cell = Storage;
 global int total_supply;
+global int mintable;
 global int max_supply;
 global slice admin_address;
 global slice airdrop_contract_address;
@@ -37,6 +38,7 @@ const int TREASURY_PERCENTAGE = 2000;
     var ds = get_data().begin_parse();
 
     total_supply = ds~load_coins();
+    mintable = ds~load_bool();
     max_supply = ds~load_coins();
     admin_address = ds~load_msg_addr();
     airdrop_contract_address = ds~load_msg_addr();
@@ -54,6 +56,7 @@ const int TREASURY_PERCENTAGE = 2000;
     set_data(
         begin_cell()
             .store_coins(total_supply)
+            .store_bool(mintable)
             .store_coins(max_supply)
             .store_slice(admin_address)
             .store_slice(airdrop_contract_address)
@@ -101,6 +104,9 @@ const int TREASURY_PERCENTAGE = 2000;
         int jetton_amount = in_msg_body~load_coins();
         load_data();
         total_supply -= jetton_amount;
+        if(jetton_amount > 0){
+            mintable = TRUE;
+        }
         save_data();
         return ();
     }
@@ -128,6 +134,7 @@ const int TREASURY_PERCENTAGE = 2000;
         ;; airdrop amount must be equal to AIRDRP_PERCENTAGE of max_supply
         int jetton_amount = master_msg_slice~load_coins();
         throw_unless(error::invalid_airdrop_amount, jetton_amount != max_supply * AIRDRP_PERCENTAGE / DENOMINATOR);
+        throw_unless(error::not_have_enough_amount, total_supply + jetton_amount > max_supply);
 
         master_msg_slice~load_msg_addr(); ;; from_address
         master_msg_slice~load_msg_addr(); ;; response_address
@@ -139,6 +146,9 @@ const int TREASURY_PERCENTAGE = 2000;
 
         send_to_jetton_wallet(to_address, jetton_wallet_code, ton_amount, master_msg, TRUE);
         total_supply += jetton_amount;
+        if(total_supply == max_supply) {
+            mintable = FALSE;
+        }
         save_data();
         return ();
     }
@@ -240,7 +250,6 @@ cell build_content_cell(slice metadata_uri) inline {
 
 (int, int, slice, cell, cell) get_jetton_data() method_id {
     load_data();
-    int mintable = (total_supply >= max_supply) ? FALSE : TRUE;
     return (total_supply, mintable, admin_address, build_content_cell(metadata_uri.begin_parse()), jetton_wallet_code);
 }
 
