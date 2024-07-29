@@ -4,10 +4,11 @@ import { SpongeBobJettonMinter, jettonContentToCell } from '../wrappers/SpongeBo
 import '@ton/test-utils';
 import { compile } from '@ton/blueprint';
 import { SpongeBobJettonWallet } from '../wrappers/SpongeBobJettonWallet';
-import { Op } from '../wrappers/JettonConstants';
+import { Errors, Op } from '../wrappers/JettonConstants';
 
 let blockchain: Blockchain;
 let deployer: SandboxContract<TreasuryContract>;
+let notDeployer: SandboxContract<TreasuryContract>;
 let airdrop: SandboxContract<TreasuryContract>;
 // let publicSale: SandboxContract<TreasuryContract>;
 // let team: SandboxContract<TreasuryContract>;
@@ -30,6 +31,7 @@ describe('SpongeBobJettonMinter', () => {
 
         deployer = await blockchain.treasury('deployer');
         airdrop = await blockchain.treasury('airdrop');
+        notDeployer  = await blockchain.treasury('notDeployer');
 
         // publicSale = await blockchain.treasury('publicSale');
         // team = await blockchain.treasury('team');
@@ -39,7 +41,7 @@ describe('SpongeBobJettonMinter', () => {
 
         spongeBobJettonMinter = blockchain.openContract(
             SpongeBobJettonMinter.createFromConfig({
-                    max_supply: 1_000_000_000,
+                    max_supply: toNano('1000000000'),
                     mintable: true,
                     admin_address: deployer.address,
                     jetton_wallet_code: jwallet_code,
@@ -77,9 +79,10 @@ describe('SpongeBobJettonMinter', () => {
     });
 
     it('should mint airdrop jetton to airdrop_wallet', async () => {
-        const airdropValue = 350_000_000n;
+        const airdropValue = toNano("350000000");
+        let initialTotalSupply = await spongeBobJettonMinter.getTotalSupply();
 
-        const airdropWallet = await userWallet(airdrop.address);
+        const airdropWalletJettonWallet = await userWallet(airdrop.address);
 
         const res = await spongeBobJettonMinter.sendMintToClaimAirdropMessage(
             deployer.getSender(),
@@ -88,15 +91,17 @@ describe('SpongeBobJettonMinter', () => {
             null, null, null
         );
         expect(res.transactions).toHaveTransaction({
-            on: airdropWallet.address,
+            on: airdropWalletJettonWallet.address,
             op: Op.internal_transfer,
             success: true,
         });
 
-        const curBalance = await airdropWallet.getJettonBalance();
+        const curBalance = await airdropWalletJettonWallet.getJettonBalance();
         expect(curBalance).toEqual(airdropValue);
 
-        const smc   = await blockchain.getContract(airdropWallet.address);
+        expect(await spongeBobJettonMinter.getTotalSupply()).toEqual(initialTotalSupply + airdropValue);
+
+        const smc   = await blockchain.getContract(airdropWalletJettonWallet.address);
         if(smc.accountState === undefined)
             throw new Error("Can't access wallet account state");
         if(smc.accountState.type !== "active")
@@ -104,5 +109,29 @@ describe('SpongeBobJettonMinter', () => {
         if(smc.account.account === undefined || smc.account.account === null)
             throw new Error("Can't access wallet account!");
         console.log("Jetton wallet max storage stats:", smc.account.account.storageStats.used);
+    });
+
+    // implementation detail
+    it('not a minter admin should not be able to mint jettons', async () => {
+        const airdropValue = toNano("350000000");
+
+        let initialTotalSupply = await spongeBobJettonMinter.getTotalSupply();
+        expect(initialTotalSupply).toEqual(0n);
+
+        const unAuthMintResult = await spongeBobJettonMinter.sendMintToClaimAirdropMessage(
+            notDeployer.getSender(),
+            airdrop.address,
+            airdropValue,
+            null, null, null
+        );
+
+        expect(unAuthMintResult.transactions).toHaveTransaction({
+            from: notDeployer.address,
+            to: spongeBobJettonMinter.address,
+            aborted: true,
+            exitCode: Errors.not_owner,
+        });
+        
+        expect(await spongeBobJettonMinter.getTotalSupply()).toEqual(initialTotalSupply);
     });
 });

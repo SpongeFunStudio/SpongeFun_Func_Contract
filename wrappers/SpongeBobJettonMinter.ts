@@ -6,7 +6,7 @@ export type JettonMinterContent = {
 };
 
 export type SpongeBobJettonMinterConfig = {
-    max_supply: number;
+    max_supply: bigint;
     mintable: boolean;
     admin_address: Address,
     jetton_wallet_code: Cell,
