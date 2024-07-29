@@ -7,6 +7,7 @@ export type JettonMinterContent = {
 
 export type SpongeBobJettonMinterConfig = {
     max_supply: number;
+    mintable: boolean;
     admin_address: Address,
     airdrop_contract_address: Address,
     public_sale_contract_address: Address,
@@ -20,6 +21,7 @@ export function spongeBobJettonMinterConfigToCell(config: SpongeBobJettonMinterC
     const content = config.jetton_content instanceof Cell ? config.jetton_content : jettonContentToCell(config.jetton_content);
     return beginCell()
             .storeCoins(0)
+            .storeBit(config.mintable)
             .storeCoins(config.max_supply)
             .storeAddress(config.admin_address)
             .storeAddress(config.airdrop_contract_address)
@@ -58,7 +60,7 @@ export class SpongeBobJettonMinter implements Contract {
         });
     }
 
-    static mintToClaimAirdropMessage(to: Address, jetton_amount: bigint, from?: Address | null, response?: Address | null, customPayload?: Cell | null, forward_ton_amount: bigint = 0n, total_ton_amount: bigint = 0n) {
+    static mintToAirdropContractMessage(to: Address, jetton_amount: bigint, from?: Address | null, response?: Address | null, customPayload?: Cell | null, forward_ton_amount: bigint = 0n, total_ton_amount: bigint = 0n) {
         const mintToAirdropMsg = beginCell().storeUint(Op.internal_transfer, 32)
             .storeUint(0, 64)
             .storeCoins(jetton_amount)
@@ -84,7 +86,7 @@ export class SpongeBobJettonMinter implements Contract {
                    forward_ton_amount: bigint = toNano('0.05'), total_ton_amount: bigint = toNano('0.1')) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: SpongeBobJettonMinter.mintToClaimAirdropMessage(to, jetton_amount, from, response_addr, customPayload, forward_ton_amount, total_ton_amount),
+            body: SpongeBobJettonMinter.mintToAirdropContractMessage(to, jetton_amount, from, response_addr, customPayload, forward_ton_amount, total_ton_amount),
             value: total_ton_amount,
         });
     }
@@ -163,6 +165,7 @@ export class SpongeBobJettonMinter implements Contract {
         let walletCode = res.stack.readCell();
         return {
             totalSupply,
+            mintable,
             adminAddress,
             content,
             walletCode,
@@ -182,5 +185,10 @@ export class SpongeBobJettonMinter implements Contract {
     async getContent(provider: ContractProvider) {
         let res = await this.getJettonData(provider);
         return res.content;
+    }
+
+    async getMintable(provider: ContractProvider) {
+        let res = await this.getJettonData(provider);
+        return res.mintable;
     }
 }
