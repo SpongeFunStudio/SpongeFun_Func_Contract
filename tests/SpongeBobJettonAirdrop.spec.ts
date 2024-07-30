@@ -128,6 +128,8 @@ describe('SpongeBobJettonAirdrop', () => {
     it('should claim token successful if have right signature', async () => {
         const claimAmount = toNano("1000");
         const userJettonWallet = await userWallet(user.address);
+        const res0 = await spongeBobAirdropContract.getAirdropStatus();
+        expect(res0.total_claimed).toEqual(0n);
 
         const res = await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
             user.getSender(),
@@ -139,5 +141,10 @@ describe('SpongeBobJettonAirdrop', () => {
             on: spongeBobAirdropContract.address,
             success: true,
         });
+
+        const curBalance = await userJettonWallet.getJettonBalance();
+        expect(curBalance).toEqual(claimAmount);
+        const res1 = await spongeBobAirdropContract.getAirdropStatus();
+        expect(res1.total_claimed).toEqual(res0.total_claimed + claimAmount);
     });
 });
