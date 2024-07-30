@@ -77,6 +77,50 @@ export class SpongeBobJettonAirdrop implements Contract {
         });
     }
 
+    static changeAdminMessage(newOwner: Address) {
+        return beginCell().storeUint(Op.change_admin, 32).storeUint(0, 64) // op, queryId
+            .storeAddress(newOwner)
+            .endCell();
+    }
+
+    async sendChangeAdmin(provider: ContractProvider, via: Sender, newOwner: Address) {
+        await provider.internal(via, {
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: SpongeBobJettonAirdrop.changeAdminMessage(newOwner),
+            value: toNano("0.1"),
+        });
+    }
+
+    async sendMintToPublicSaleContractMessage(
+        provider: ContractProvider,
+        via: Sender,
+        public_sale_contract_address: Address,
+        total_ton_amount: bigint = toNano('1')
+    ) {
+        await provider.internal(via, {
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell()
+                .storeUint(Op.mint_to_public_sale_contract, 32)
+                .storeUint(0, 64)
+                .storeAddress(public_sale_contract_address)
+                .endCell(),
+            value: total_ton_amount,
+        });
+    }
+
+    static topUpMessage() {
+        return beginCell().storeUint(Op.top_up, 32).storeUint(0, 64) // op, queryId
+            .endCell();
+    }
+
+    async sendTopUp(provider: ContractProvider, via: Sender, value: bigint = toNano('1')) {
+        await provider.internal(via, {
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: SpongeBobJettonAirdrop.topUpMessage(),
+            value: value,
+        });
+    }
+
     async getAirdropStatus(provider: ContractProvider) {
         let res = await provider.get('get_airdrop_status', []);
 
@@ -94,6 +138,11 @@ export class SpongeBobJettonAirdrop implements Contract {
             admin_address,
             walletCode,
         };
+    }
+
+     async getAdminAddress(provider: ContractProvider) {
+        let res = await this.getAirdropStatus(provider);
+        return res.admin_address;
     }
 
     async getBalance(provider: ContractProvider): Promise<bigint> {

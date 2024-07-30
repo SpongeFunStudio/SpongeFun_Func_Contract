@@ -2,6 +2,7 @@
 #include "imports/op-codes.fc";
 #include "imports/workchain.fc";
 #include "imports/jetton-utils.fc";
+#include "imports/workchain.fc";
 
 global int seqno; ;; Prevnet replay attack
 global int total_claimed;
@@ -70,12 +71,20 @@ global cell jetton_wallet_code;
 
         var signature = master_msg_slice~load_bits(512);
         var hash = slice_hash(master_msg_slice);
-        throw_unless(401, check_signature(hash, signature, public_key)); ;; Revert on wrong signature
+        throw_unless(
+            error::invalid_signature, 
+            check_signature(hash, signature, public_key)
+        ); ;; Revert on wrong signature
 
         int msg_seqno = master_msg_slice~load_uint(32);
-        throw_unless(402, msg_seqno == seqno); ;; Revert if the sequence number of the incoming message does not match the stored sequence number
+        throw_unless(error::invalid_seqno, msg_seqno == seqno); ;; Revert if the sequence number of the incoming message does not match the stored sequence number
 
+        ;;airdrop contract hold all token first, but just 35% can be claimed, than send 65% token to public sale contract after more than 1/2 of airdrop tokens are claimed
         int claim_amount = master_msg_slice~load_coins();
+        throw_unless(
+            error::exceed_max_airdrop_percentage, 
+            total_claimed + claim_amount <= MAX_SUPPLY * AIRDRP_PERCENTAGE / DENOMINATOR
+        ); ;; Revert if the total claimed amount exceeds the 35% supply
 
         cell msg_body = begin_cell()
             .store_op(op::transfer)
@@ -111,21 +120,40 @@ global cell jetton_wallet_code;
         return ();
     }
 
-    if (op == "mint_to_public_sale_contract"c) {
+    if (op == op::mint_to_public_sale_contract) {
         throw_unless(error::not_owner, equal_slices_bits(sender_address, admin_address));
+
+        ;; only can start public sale stage when 1/2 of airdrop tokens are claimed
         throw_unless(
             error::can_not_start_public_sale, 
             total_claimed >= MAX_SUPPLY * AIRDRP_PERCENTAGE / (2 * DENOMINATOR)
         );
+        slice public_sale_contract_address = in_msg_body~load_msg_addr();
+        check_same_workchain(public_sale_contract_address);
+
+        ;; all left token send to public sale contract first, but just 35% of total supply can be sale
+        int all_left_token = MAX_SUPPLY - MAX_SUPPLY * AIRDRP_PERCENTAGE / DENOMINATOR;
 
         cell msg_body = begin_cell()
-            .store_op("mint_to_public_sale_contract"c)
+            .store_op(op::transfer)
             .store_query_id(query_id)
+            .store_coins(all_left_token)
+            .store_slice(public_sale_contract_address)
+            .store_slice(sender_address)
+            .store_int(0, 1)
+            .store_coins(0)
+            .store_int(0, 1)
             .end_cell();
 
+        slice airdrop_wallet = calculate_user_jetton_wallet_address(
+            my_address(), 
+            sponge_bob_minter_address, 
+            jetton_wallet_code
+        );
+
         cell msg = begin_cell()
-            .store_msg_flags_and_address_none(NON_BOUNCEABLE)
-            .store_slice(sponge_bob_minter_address)
+            .store_msg_flags_and_address_none(BOUNCEABLE)
+            .store_slice(airdrop_wallet)
             .store_coins(0)
             .store_only_body_ref(msg_body)
             .end_cell();
@@ -144,6 +172,14 @@ global cell jetton_wallet_code;
         in_msg_body.end_parse();
         set_data(new_data);
         set_code(new_code);
+        return ();
+    }
+
+    if (op == op::change_admin) {
+        throw_unless(error::not_owner, equal_slices_bits(sender_address, admin_address));
+        admin_address = in_msg_body~load_msg_addr();
+        in_msg_body.end_parse();
+        save_data();
         return ();
     }
 

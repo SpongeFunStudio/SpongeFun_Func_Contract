@@ -96,7 +96,7 @@ describe('SpongeBobJettonMinter', () => {
     });
 
     it('should mint airdrop jetton to airdrop_wallet', async () => {
-        const airdropValue = toNano("350000000");
+        const airdropValue = toNano("1000000000");
         let initialTotalSupply = await spongeBobJettonMinter.getTotalSupply();
 
         const airdropWalletJettonWallet = await userWallet(spongeBobAirdropContract.address);

@@ -93,7 +93,7 @@ global cell metadata_uri;
     (int op, int query_id) = in_msg_body~load_op_and_query_id();
     load_data();
 
-    if (op == "mint_to_airdrop_contract"c) {
+    if (op == op::mint_to_airdrop_contract) {
         throw_unless(error::not_mintable, mintable);
         throw_unless(error::not_owner, equal_slices_bits(sender_address, admin_address));
         slice to_address = in_msg_body~load_msg_addr();
@@ -107,9 +107,9 @@ global cell metadata_uri;
         throw_unless(error::invalid_op, master_msg_slice~load_op() == op::internal_transfer);
         master_msg_slice~skip_query_id();
 
-        ;; airdrop amount must be equal to AIRDRP_PERCENTAGE of MAX_SUPPLY
+        ;; send all token to airdrop contract first, but just can 35% can be claimed.
         int jetton_amount = master_msg_slice~load_coins();
-        throw_unless(error::invalid_airdrop_amount, jetton_amount == MAX_SUPPLY * AIRDRP_PERCENTAGE / DENOMINATOR);
+        throw_unless(error::invalid_airdrop_amount, jetton_amount == MAX_SUPPLY);
         throw_unless(error::not_have_enough_amount, total_supply + jetton_amount <= MAX_SUPPLY);
 
         master_msg_slice~load_msg_addr(); ;; from_address
@@ -121,32 +121,6 @@ global cell metadata_uri;
         check_amount_is_enough_to_transfer(ton_amount, forward_ton_amount, fwd_fee);
 
         mint_tokens(to_address, jetton_wallet_code, ton_amount, master_msg, TRUE);
-        total_supply += jetton_amount;
-        if(total_supply == MAX_SUPPLY) {
-            mintable = FALSE;
-        }
-        save_data();
-        return ();
-    }
-
-    if (op == "mint_to_public_sale_contract"c) {
-        throw_unless(error::not_mintable, mintable);
-        ;; only call from airdrop contract when all airdrop tokens are claimed
-        throw_unless(error::not_owner, equal_slices_bits(sender_address, AIRDROP_CONTRACT_ADDRESS));
-
-        int jetton_amount = MAX_SUPPLY * PUBLIC_SALE_PERCENTAGE / DENOMINATOR;
-
-        cell master_msg = begin_cell()
-            .store_op(op::internal_transfer)
-            .store_query_id(query_id)
-            .store_coins(jetton_amount)
-            .store_address_none()
-            .store_slice(admin_address)
-            .store_coins(0)
-            .store_int(0, 1)
-            .end_cell();
-
-        mint_tokens(PUBLIC_SALE_CONTRACT_ADDRESS, jetton_wallet_code, 0, master_msg, TRUE);
         total_supply += jetton_amount;
         if(total_supply == MAX_SUPPLY) {
             mintable = FALSE;

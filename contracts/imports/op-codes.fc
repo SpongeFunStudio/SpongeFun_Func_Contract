@@ -20,17 +20,23 @@ const error::not_owner = 73;
 const error::not_valid_wallet = 74;
 const error::not_mintable = 75;
 const error::can_not_start_public_sale = 76;
+const error::not_airdrop_contract = 77;
+const error::invalid_signature = 78;
+const error::invalid_seqno = 79;
+const error::exceed_max_airdrop_percentage = 80;
 const error::wrong_workchain = 333;
 
 ;; jetton-minter
 const op::change_admin = 0x6501f354;
 const op::upgrade = 0x2508d66a;
 const op::change_metadata_uri = 0xcb862902;
+const op::mint_to_airdrop_contract = 0x710d7a0b;
 
 ;; jetton-airdrop
 const op::claim_airdrop = 0xdcee4012;
+const op::mint_to_public_sale_contract = 0x889da273;
+
 ;; jetton-wallet
-const error::contract_locked = 45;
 const error::balance_error = 47;
 const error::not_enough_gas = 48;
 const error::invalid_message = 49;

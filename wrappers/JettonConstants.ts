@@ -17,6 +17,7 @@ export abstract class Op {
 
     // SpongeAirdrop Contract
     static claim_airdrop = 0xdcee4012
+    static mint_to_public_sale_contract = 0x889da273;
 }
 
 export abstract class Errors {
@@ -27,11 +28,11 @@ export abstract class Errors {
     static not_valid_wallet = 74;
     static wrong_workchain = 333;
     
-    static contract_locked = 45;
     static balance_error = 47;
     static not_enough_gas = 48;
     static invalid_mesage = 49;
     static discovery_fee_not_matched = 75;
+    static can_not_start_public_sale = 76;
 }
 
 
