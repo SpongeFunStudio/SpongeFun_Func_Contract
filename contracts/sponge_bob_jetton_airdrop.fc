@@ -1,12 +1,14 @@
 #include "imports/stdlib.fc";
 #include "imports/op-codes.fc";
 #include "imports/workchain.fc";
+#include "imports/jetton-utils.fc";
 
 global int seqno; ;; Prevnet replay attack
 global int total_claimed;
 global int public_key;
 global slice sponge_bob_minter_address;
 global slice admin_address;
+global cell jetton_wallet_code;
 
 ;; load_data populates storage variables using stored data
 () load_data() impure {
@@ -18,6 +20,7 @@ global slice admin_address;
     public_key = ds~load_uint(256);
     sponge_bob_minter_address = ds~load_msg_addr();
     admin_address = ds~load_msg_addr();
+    jetton_wallet_code = ds~load_ref();
     ds.end_parse();
 }
 
@@ -30,6 +33,7 @@ global slice admin_address;
             .store_uint(public_key, 256)
             .store_slice(sponge_bob_minter_address)
             .store_slice(admin_address)
+            .store_ref(jetton_wallet_code)
             .end_cell()
     );
 }
@@ -41,7 +45,7 @@ global slice admin_address;
     if (msg_flags & 1) { ;; is bounced
         in_msg_body~skip_bounced_prefix();
         ;; process only mint bounces
-        ifnot (in_msg_body~load_op() == op::internal_transfer) {
+        ifnot (in_msg_body~load_op() == op::transfer) {
             return ();
         }
         in_msg_body~skip_query_id();
@@ -58,15 +62,20 @@ global slice admin_address;
 
     (int op, int query_id) = in_msg_body~load_op_and_query_id();
     load_data();
-    if (op == "claim_airdrop"c) {
-        var signature = in_msg_body~load_bits(512);
-        var hash = slice_hash(in_msg_body);
+
+    if (op == op::claim_airdrop) {
+        cell master_msg = in_msg_body~load_ref();
+        in_msg_body.end_parse();
+        slice master_msg_slice = master_msg.begin_parse();
+
+        var signature = master_msg_slice~load_bits(512);
+        var hash = slice_hash(master_msg_slice);
         throw_unless(401, check_signature(hash, signature, public_key)); ;; Revert on wrong signature
 
-        int msg_seqno = in_msg_body~load_uint(32);
+        int msg_seqno = master_msg_slice~load_uint(32);
         throw_unless(402, msg_seqno == seqno); ;; Revert if the sequence number of the incoming message does not match the stored sequence number
 
-        int claim_amount = in_msg_body~load_coins();
+        int claim_amount = master_msg_slice~load_coins();
 
         cell msg_body = begin_cell()
             .store_op(op::transfer)
@@ -79,9 +88,15 @@ global slice admin_address;
             .store_int(0, 1)
             .end_cell();
 
+        slice airdrop_wallet = calculate_user_jetton_wallet_address(
+            my_address(), 
+            sponge_bob_minter_address, 
+            jetton_wallet_code
+        );
+
         cell msg = begin_cell()
             .store_msg_flags_and_address_none(BOUNCEABLE)
-            .store_slice(AIRDROP_CONTRACT_ADDRESS)
+            .store_slice(airdrop_wallet)
             .store_coins(0)
             .store_only_body_ref(msg_body)
             .end_cell();
@@ -93,6 +108,7 @@ global slice admin_address;
         );
         total_claimed += claim_amount;
         save_data();
+        return ();
     }
 
     if (op == "mint_to_public_sale_contract"c) {
@@ -119,6 +135,7 @@ global slice admin_address;
             SEND_MODE_CARRY_ALL_REMAINING_MESSAGE_VALUE 
             | SEND_MODE_BOUNCE_ON_ACTION_FAIL
         );
+        return ();
     }
 
     if (op == op::upgrade) {
@@ -140,4 +157,9 @@ global slice admin_address;
 int get_smc_balance() method_id {
     [int balance, _] = get_balance(); ;; get_balance() returns tuple [(int)balance of TON, (cell)extra currency]
     return balance;
+}
+
+(int, int, int, slice, slice, cell) get_airdrop_status() method_id {
+    load_data();
+    return (seqno, total_claimed, public_key, sponge_bob_minter_address, admin_address, jetton_wallet_code);
 }

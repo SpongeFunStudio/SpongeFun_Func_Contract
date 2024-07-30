@@ -6,17 +6,17 @@ export abstract class Op {
     static burn = 0x595f07bc;
     static burn_notification = 0x7bdd97de;
     
+    // SpongeMinter Contract
     static provide_wallet_address = 0x2c76b973;
     static take_wallet_address = 0xd1735400;
-    static mint = 0x642b7d07;
     static mint_to_airdrop_contract = 0x710d7a0b;
     static change_admin = 0x6501f354;
-    static claim_admin = 0xfb88e119;
     static upgrade = 0x2508d66a;
-    static call_to = 0x235caf52;
     static top_up = 0xd372158c;
     static change_metadata_url = 0xcb862902;
-    static set_status = 0xeed236d3;
+
+    // SpongeAirdrop Contract
+    static claim_airdrop = 0xdcee4012
 }
 
 export abstract class Errors {

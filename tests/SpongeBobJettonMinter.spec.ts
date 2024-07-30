@@ -11,9 +11,6 @@ import { SpongeBobJettonAirdrop } from '../wrappers/SpongeBobJettonAirdrop';
 let blockchain: Blockchain;
 let deployer: SandboxContract<TreasuryContract>;
 let notDeployer: SandboxContract<TreasuryContract>;
-// let publicSale: SandboxContract<TreasuryContract>;
-// let team: SandboxContract<TreasuryContract>;
-// let treasury: SandboxContract<TreasuryContract>;
 let spongeBobJettonMinter: SandboxContract<SpongeBobJettonMinter>;
 let spongeBobAirdropContract: SandboxContract<SpongeBobJettonAirdrop>;
 let jwallet_code: Cell;
@@ -56,7 +53,8 @@ describe('SpongeBobJettonMinter', () => {
             SpongeBobJettonAirdrop.createFromConfig({
                     public_key: kp.publicKey,
                     sponge_bob_minter_address: spongeBobJettonMinter.address,
-                    admin_address: deployer.address
+                    admin_address: deployer.address,
+                    jetton_wallet_code: jwallet_code
                 },
                 spongeBobAirdropCode
             ));
