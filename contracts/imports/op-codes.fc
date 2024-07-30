@@ -19,6 +19,7 @@ const error::wrong_op = 0xffff;
 const error::not_owner = 73;
 const error::not_valid_wallet = 74;
 const error::not_mintable = 75;
+const error::can_not_start_public_sale = 76;
 const error::wrong_workchain = 333;
 
 ;; jetton-minter

@@ -1,13 +1,12 @@
 #include "imports/stdlib.fc";
 #include "imports/op-codes.fc";
 #include "imports/workchain.fc";
-;; #include "imports/jetton-utils.fc";
-;; #include "imports/gas.fc";
 
 global int seqno; ;; Prevnet replay attack
 global int public_key;
+global int total_claimed;
 global slice sponge_bob_minter_address;
-global slice owner_address;
+global slice admin_address;
 
 ;; load_data populates storage variables using stored data
 () load_data() impure {
@@ -16,8 +15,9 @@ global slice owner_address;
 
     seqno = ds~load_uint(32);
     public_key = ds~load_uint(256);
+    total_claimed = ds~load_coins();
     sponge_bob_minter_address = ds~load_msg_addr();
-    owner_address = ds~load_msg_addr();
+    admin_address = ds~load_msg_addr();
     ds.end_parse();
 }
 
@@ -27,8 +27,9 @@ global slice owner_address;
         begin_cell()
             .store_uint(seqno, 32)
             .store_uint(public_key, 256)
+            .store_coins(total_claimed)
             .store_slice(sponge_bob_minter_address)
-            .store_slice(owner_address)
+            .store_slice(admin_address)
             .end_cell()
     );
 }
@@ -38,16 +39,16 @@ global slice owner_address;
     int msg_flags = in_msg_full_slice~load_msg_flags();
 
     if (msg_flags & 1) { ;; is bounced
-        ;; in_msg_body~skip_bounced_prefix();
-        ;; ;; process only mint bounces
-        ;; ifnot (in_msg_body~load_op() == op::internal_transfer) {
-        ;;     return ();
-        ;; }
-        ;; in_msg_body~skip_query_id();
-        ;; int jetton_amount = in_msg_body~load_coins();
-        ;; load_data();
-        ;; total_supply -= jetton_amount;
-        ;; save_data();
+        in_msg_body~skip_bounced_prefix();
+        ;; process only mint bounces
+        ifnot (in_msg_body~load_op() == op::internal_transfer) {
+            return ();
+        }
+        in_msg_body~skip_query_id();
+        int jetton_amount = in_msg_body~load_coins();
+        load_data();
+        total_claimed -= jetton_amount;
+        save_data();
         return ();
     }
 
@@ -80,9 +81,69 @@ global slice owner_address;
 
         cell msg = begin_cell()
             .store_msg_flags_and_address_none(BOUNCEABLE)
-            .store_slice(sender_address)
+            .store_slice(AIRDROP_CONTRACT_WALLET_ADDRESS)
             .store_coins(0)
             .store_only_body_ref(msg_body)
             .end_cell();
+
+        send_raw_message(
+            msg, 
+            SEND_MODE_CARRY_ALL_REMAINING_MESSAGE_VALUE 
+            | SEND_MODE_BOUNCE_ON_ACTION_FAIL
+        );
+        total_claimed += claim_amount;
+        save_data();
     }
+
+    if (op == "mint_to_public_sale_contract"c) {
+        throw_unless(error::not_owner, equal_slices_bits(sender_address, admin_address));
+        throw_unless(
+            error::can_not_start_public_sale, 
+            total_claimed >= MAX_SUPPLY * AIRDRP_PERCENTAGE / (2 * DENOMINATOR)
+        );
+
+        ;; cell msg_body = begin_cell()
+        ;;     .store_op("mint_to_public_sale_contract"c)
+        ;;     .store_query_id(query_id)
+        ;;     .store_coins(claim_amount)
+        ;;     .store_slice(sender_address)
+        ;;     .store_slice(sender_address)
+        ;;     .store_int(0, 1)
+        ;;     .store_coins(0)
+        ;;     .store_int(0, 1)
+        ;;     .end_cell();
+
+        cell msg_body = begin_cell()
+            .store_op("mint_to_public_sale_contract"c)
+            .store_query_id(query_id)
+            .end_cell();
+
+        cell msg = begin_cell()
+            .store_msg_flags_and_address_none(NON_BOUNCEABLE)
+            .store_slice(sponge_bob_minter_address)
+            .store_coins(0)
+            .store_only_body_ref(msg_body)
+            .end_cell();
+
+        send_raw_message(
+            msg, 
+            SEND_MODE_CARRY_ALL_REMAINING_MESSAGE_VALUE 
+            | SEND_MODE_BOUNCE_ON_ACTION_FAIL
+        );
+    }
+
+    if (op == op::upgrade) {
+        throw_unless(error::not_owner, equal_slices_bits(sender_address, admin_address));
+        (cell new_data, cell new_code) = (in_msg_body~load_ref(), in_msg_body~load_ref());
+        in_msg_body.end_parse();
+        set_data(new_data);
+        set_code(new_code);
+        return ();
+    }
+
+    if (op == op::top_up) {
+        return (); ;; just accept tons
+    }
+
+    throw(error::wrong_op);
 }

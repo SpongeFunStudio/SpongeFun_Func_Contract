@@ -6,7 +6,6 @@ export type JettonMinterContent = {
 };
 
 export type SpongeBobJettonMinterConfig = {
-    max_supply: bigint;
     mintable: boolean;
     admin_address: Address,
     jetton_wallet_code: Cell,
@@ -18,7 +17,6 @@ export function spongeBobJettonMinterConfigToCell(config: SpongeBobJettonMinterC
     return beginCell()
             .storeCoins(0)
             .storeBit(config.mintable)
-            .storeCoins(config.max_supply)
             .storeAddress(config.admin_address)
             .storeRef(config.jetton_wallet_code)
             .storeRef(content)
@@ -154,14 +152,12 @@ export class SpongeBobJettonMinter implements Contract {
         let res = await provider.get('get_jetton_data', []);
         let totalSupply = res.stack.readBigNumber();
         let mintable = res.stack.readBoolean();
-        let maxSupply = res.stack.readBigNumber();
         let adminAddress = res.stack.readAddress();
         let content = res.stack.readCell();
         let walletCode = res.stack.readCell();
         return {
             totalSupply,
             mintable,
-            maxSupply,
             adminAddress,
             content,
             walletCode,
@@ -171,11 +167,6 @@ export class SpongeBobJettonMinter implements Contract {
     async getTotalSupply(provider: ContractProvider) {
         let res = await this.getJettonData(provider);
         return res.totalSupply;
-    }
-
-    async getMaxSupply(provider: ContractProvider) {
-        let res = await this.getJettonData(provider);
-        return res.maxSupply;
     }
 
     async getAdminAddress(provider: ContractProvider) {

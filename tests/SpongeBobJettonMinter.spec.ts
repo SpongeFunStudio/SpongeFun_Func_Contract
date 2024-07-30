@@ -41,7 +41,6 @@ describe('SpongeBobJettonMinter', () => {
 
         spongeBobJettonMinter = blockchain.openContract(
             SpongeBobJettonMinter.createFromConfig({
-                    max_supply: toNano('1000000000'),
                     mintable: true,
                     admin_address: deployer.address,
                     jetton_wallet_code: jwallet_code,
