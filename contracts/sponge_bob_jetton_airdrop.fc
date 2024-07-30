@@ -3,8 +3,8 @@
 #include "imports/workchain.fc";
 
 global int seqno; ;; Prevnet replay attack
-global int public_key;
 global int total_claimed;
+global int public_key;
 global slice sponge_bob_minter_address;
 global slice admin_address;
 
@@ -26,8 +26,8 @@ global slice admin_address;
     set_data(
         begin_cell()
             .store_uint(seqno, 32)
-            .store_uint(public_key, 256)
             .store_coins(total_claimed)
+            .store_uint(public_key, 256)
             .store_slice(sponge_bob_minter_address)
             .store_slice(admin_address)
             .end_cell()

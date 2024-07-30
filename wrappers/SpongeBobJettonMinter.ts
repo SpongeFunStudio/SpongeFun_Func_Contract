@@ -7,9 +7,9 @@ export type JettonMinterContent = {
 
 export type SpongeBobJettonMinterConfig = {
     mintable: boolean;
-    admin_address: Address,
-    jetton_wallet_code: Cell,
-    jetton_content: Cell | JettonMinterContent
+    admin_address: Address;
+    jetton_wallet_code: Cell;
+    jetton_content: Cell | JettonMinterContent;
 };
 
 export function spongeBobJettonMinterConfigToCell(config: SpongeBobJettonMinterConfig): Cell {

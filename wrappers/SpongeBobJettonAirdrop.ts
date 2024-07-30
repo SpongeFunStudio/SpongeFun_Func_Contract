@@ -1,9 +1,19 @@
 import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from '@ton/core';
 
-export type SpongeBobJettonAirdropConfig = {};
+export type SpongeBobJettonAirdropConfig = {
+    public_key: bigint;
+    sponge_bob_minter_address: Address;
+    admin_address: Address;
+};
 
 export function spongeBobJettonAirdropConfigToCell(config: SpongeBobJettonAirdropConfig): Cell {
-    return beginCell().endCell();
+    return beginCell()
+            .storeCoins(0)
+            .storeCoins(0)
+            .storeUint(config.public_key, 256)
+            .storeAddress(config.sponge_bob_minter_address)
+            .storeAddress(config.admin_address)
+            .endCell();
 }
 
 export class SpongeBobJettonAirdrop implements Contract {

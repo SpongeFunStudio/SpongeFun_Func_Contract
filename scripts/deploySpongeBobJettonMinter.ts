@@ -6,10 +6,6 @@ import { jettonWalletCodeFromLibrary } from '../wrappers/ui-utils';
 export async function run(provider: NetworkProvider) {
     
     const admin_address = Address.parse("")
-    const airdrop_contract_address = Address.parse("")
-    const public_sale_contract_address = Address.parse("")
-    const team_contract_address = Address.parse("")
-    const treasury_contract_address = Address.parse("")
 
     const jettonWalletCodeRaw = await compile('SpongeBobJettonWallet');
     const jettonWalletCode = jettonWalletCodeFromLibrary(jettonWalletCodeRaw);
@@ -17,13 +13,8 @@ export async function run(provider: NetworkProvider) {
 
     const spongeBobJettonMinter = provider.open(SpongeBobJettonMinter.createFromConfig(
         {
-            max_supply: 1000000000,
             mintable: true,
             admin_address: admin_address,
-            airdrop_contract_address: airdrop_contract_address,
-            public_sale_contract_address: public_sale_contract_address,
-            team_contract_address: team_contract_address,
-            treasury_contract_address: treasury_contract_address,
             jetton_wallet_code: jettonWalletCode,
             jetton_content: {uri: jettonMetadataUri}
         },
