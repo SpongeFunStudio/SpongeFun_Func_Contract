@@ -148,4 +148,24 @@ describe('SpongeBobJettonMinter', () => {
         });   
         expect(await spongeBobJettonMinter.getTotalSupply()).toEqual(initialTotalSupply);
     });
+
+    it('not a minter admin should not be able to mint jettons', async () => {
+        const airdropValue = toNano("300000000");
+        let initialTotalSupply = await spongeBobJettonMinter.getTotalSupply();
+        expect(initialTotalSupply).toEqual(0n);
+
+        const unAuthMintResult = await spongeBobJettonMinter.sendMintToClaimAirdropMessage(
+            deployer.getSender(),
+            spongeBobAirdropContract.address,
+            airdropValue,
+            null, null, null
+        );
+        expect(unAuthMintResult.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: spongeBobJettonMinter.address,
+            aborted: true,
+            exitCode: Errors.invalid_airdrop_amount,
+        });   
+        expect(await spongeBobJettonMinter.getTotalSupply()).toEqual(initialTotalSupply);
+    });
 });

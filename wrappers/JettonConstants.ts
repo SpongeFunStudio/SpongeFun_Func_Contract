@@ -20,6 +20,7 @@ export abstract class Op {
 }
 
 export abstract class Errors {
+    static invalid_airdrop_amount = 71;
     static invalid_op = 72;
     static wrong_op = 0xffff;
     static not_owner = 73;
