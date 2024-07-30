@@ -81,7 +81,7 @@ global slice admin_address;
 
         cell msg = begin_cell()
             .store_msg_flags_and_address_none(BOUNCEABLE)
-            .store_slice(AIRDROP_CONTRACT_WALLET_ADDRESS)
+            .store_slice(AIRDROP_CONTRACT_ADDRESS)
             .store_coins(0)
             .store_only_body_ref(msg_body)
             .end_cell();
@@ -101,17 +101,6 @@ global slice admin_address;
             error::can_not_start_public_sale, 
             total_claimed >= MAX_SUPPLY * AIRDRP_PERCENTAGE / (2 * DENOMINATOR)
         );
-
-        ;; cell msg_body = begin_cell()
-        ;;     .store_op("mint_to_public_sale_contract"c)
-        ;;     .store_query_id(query_id)
-        ;;     .store_coins(claim_amount)
-        ;;     .store_slice(sender_address)
-        ;;     .store_slice(sender_address)
-        ;;     .store_int(0, 1)
-        ;;     .store_coins(0)
-        ;;     .store_int(0, 1)
-        ;;     .end_cell();
 
         cell msg_body = begin_cell()
             .store_op("mint_to_public_sale_contract"c)

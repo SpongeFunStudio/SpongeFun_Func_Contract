@@ -33,10 +33,6 @@ describe('SpongeBobJettonMinter', () => {
         airdrop = await blockchain.treasury('airdrop');
         notDeployer  = await blockchain.treasury('notDeployer');
 
-        // publicSale = await blockchain.treasury('publicSale');
-        // team = await blockchain.treasury('team');
-        // treasury = await blockchain.treasury('treasury');
-
         jwallet_code = await compile('SpongeBobJettonWallet');
 
         spongeBobJettonMinter = blockchain.openContract(

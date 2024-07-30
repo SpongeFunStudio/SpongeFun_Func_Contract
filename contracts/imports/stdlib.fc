@@ -809,8 +809,6 @@ const int MAX_SUPPLY = 1000000000000000000;
 const slice AIRDROP_CONTRACT_ADDRESS = "";
 const slice PUBLIC_SALE_CONTRACT_ADDRESS = "";
 
-const slice AIRDROP_CONTRACT_WALLET_ADDRESS = "";
-
 ;; According to the guideline, it is recommended to start the body of the internal message with uint32 op and uint64 query_id
 
 const int MSG_OP_SIZE = 32;
