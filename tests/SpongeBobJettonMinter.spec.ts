@@ -5,34 +5,41 @@ import '@ton/test-utils';
 import { compile } from '@ton/blueprint';
 import { SpongeBobJettonWallet } from '../wrappers/SpongeBobJettonWallet';
 import { Errors, Op } from '../wrappers/JettonConstants';
+import { mnemonicNew, sign, mnemonicToPrivateKey, KeyPair } from 'ton-crypto';
+import { SpongeBobJettonAirdrop } from '../wrappers/SpongeBobJettonAirdrop';
 
 let blockchain: Blockchain;
 let deployer: SandboxContract<TreasuryContract>;
 let notDeployer: SandboxContract<TreasuryContract>;
-let airdrop: SandboxContract<TreasuryContract>;
 // let publicSale: SandboxContract<TreasuryContract>;
 // let team: SandboxContract<TreasuryContract>;
 // let treasury: SandboxContract<TreasuryContract>;
 let spongeBobJettonMinter: SandboxContract<SpongeBobJettonMinter>;
-let jwallet_code_raw: Cell;
+let spongeBobAirdropContract: SandboxContract<SpongeBobJettonAirdrop>;
 let jwallet_code: Cell;
 
 let userWallet: (address: Address) => Promise<SandboxContract<SpongeBobJettonWallet>>;
-    
+
+async function randomKp() {
+    let mnemonics = await mnemonicNew();
+    return mnemonicToPrivateKey(mnemonics);
+}
+
 describe('SpongeBobJettonMinter', () => {
-    let code: Cell;
+    let spongeBobMinterCode: Cell;
+    let spongeBobAirdropCode: Cell;
+    let kp: KeyPair;
 
     beforeAll(async () => {
-        code = await compile('SpongeBobJettonMinter');
+        spongeBobMinterCode = await compile('SpongeBobJettonMinter');
+        spongeBobAirdropCode = await compile('SpongeBobJettonAirdrop');
     });
 
     beforeEach(async () => {
         blockchain = await Blockchain.create();
-
+        kp = await randomKp();
         deployer = await blockchain.treasury('deployer');
-        airdrop = await blockchain.treasury('airdrop');
         notDeployer  = await blockchain.treasury('notDeployer');
-
         jwallet_code = await compile('SpongeBobJettonWallet');
 
         spongeBobJettonMinter = blockchain.openContract(
@@ -42,8 +49,19 @@ describe('SpongeBobJettonMinter', () => {
                     jetton_wallet_code: jwallet_code,
                     jetton_content: jettonContentToCell({uri: "https://ton.org/"})
                 },
-                code
+                spongeBobMinterCode
             ));
+        console.log("spongeBobJettonMinter address:", spongeBobJettonMinter.address);
+        
+        spongeBobAirdropContract = blockchain.openContract(
+            SpongeBobJettonAirdrop.createFromConfig({
+                    public_key: kp.publicKey,
+                    sponge_bob_minter_address: spongeBobJettonMinter.address,
+                    admin_address: deployer.address
+                },
+                spongeBobAirdropCode
+            ));
+        console.log("spongeBobAirdropContract address:", spongeBobAirdropContract.address);
 
         userWallet = async (address:Address) => blockchain.openContract(
                           SpongeBobJettonWallet.createFromAddress(
@@ -66,6 +84,14 @@ describe('SpongeBobJettonMinter', () => {
             from: spongeBobJettonMinter.address,
             inMessageBounced: true
         });
+
+        const deployResult1 = await spongeBobAirdropContract.sendDeploy(deployer.getSender(), toNano('0.05'));
+        expect(deployResult1.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: spongeBobAirdropContract.address,
+            deploy: true,
+            success: true,
+        });
     });
 
     it('should deploy', async () => {
@@ -77,11 +103,10 @@ describe('SpongeBobJettonMinter', () => {
         const airdropValue = toNano("350000000");
         let initialTotalSupply = await spongeBobJettonMinter.getTotalSupply();
 
-        const airdropWalletJettonWallet = await userWallet(airdrop.address);
-
+        const airdropWalletJettonWallet = await userWallet(spongeBobAirdropContract.address);
         const res = await spongeBobJettonMinter.sendMintToClaimAirdropMessage(
             deployer.getSender(),
-            airdrop.address,
+            spongeBobAirdropContract.address,
             airdropValue,
             null, null, null
         );
@@ -90,10 +115,8 @@ describe('SpongeBobJettonMinter', () => {
             op: Op.internal_transfer,
             success: true,
         });
-
         const curBalance = await airdropWalletJettonWallet.getJettonBalance();
         expect(curBalance).toEqual(airdropValue);
-
         expect(await spongeBobJettonMinter.getTotalSupply()).toEqual(initialTotalSupply + airdropValue);
 
         const smc   = await blockchain.getContract(airdropWalletJettonWallet.address);
@@ -109,24 +132,20 @@ describe('SpongeBobJettonMinter', () => {
     // implementation detail
     it('not a minter admin should not be able to mint jettons', async () => {
         const airdropValue = toNano("350000000");
-
         let initialTotalSupply = await spongeBobJettonMinter.getTotalSupply();
         expect(initialTotalSupply).toEqual(0n);
-
         const unAuthMintResult = await spongeBobJettonMinter.sendMintToClaimAirdropMessage(
             notDeployer.getSender(),
-            airdrop.address,
+            spongeBobAirdropContract.address,
             airdropValue,
             null, null, null
         );
-
         expect(unAuthMintResult.transactions).toHaveTransaction({
             from: notDeployer.address,
             to: spongeBobJettonMinter.address,
             aborted: true,
             exitCode: Errors.not_owner,
-        });
-        
+        });   
         expect(await spongeBobJettonMinter.getTotalSupply()).toEqual(initialTotalSupply);
     });
 });

@@ -1,16 +1,17 @@
 import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from '@ton/core';
+import { Op } from './JettonConstants';
 
 export type SpongeBobJettonAirdropConfig = {
-    public_key: bigint;
+    public_key: Buffer;
     sponge_bob_minter_address: Address;
     admin_address: Address;
 };
 
 export function spongeBobJettonAirdropConfigToCell(config: SpongeBobJettonAirdropConfig): Cell {
     return beginCell()
+            .storeUint(0, 32)
             .storeCoins(0)
-            .storeCoins(0)
-            .storeUint(config.public_key, 256)
+            .storeBuffer(config.public_key)
             .storeAddress(config.sponge_bob_minter_address)
             .storeAddress(config.admin_address)
             .endCell();
@@ -33,7 +34,7 @@ export class SpongeBobJettonAirdrop implements Contract {
         await provider.internal(via, {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: beginCell().endCell(),
+            body: beginCell().storeUint(Op.top_up, 32).storeUint(0, 64).endCell(),
         });
     }
 }
