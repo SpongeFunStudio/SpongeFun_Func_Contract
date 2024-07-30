@@ -5,7 +5,7 @@ import '@ton/test-utils';
 import { compile } from '@ton/blueprint';
 import { jettonContentToCell, SpongeBobJettonMinter } from '../wrappers/SpongeBobJettonMinter';
 import { SpongeBobJettonWallet } from '../wrappers/SpongeBobJettonWallet';
-import { mnemonicNew, sign, mnemonicToPrivateKey, KeyPair } from 'ton-crypto';
+import { mnemonicNew, mnemonicToPrivateKey, KeyPair } from 'ton-crypto';
 import { Errors, Op } from '../wrappers/JettonConstants';
 
 let blockchain: Blockchain;

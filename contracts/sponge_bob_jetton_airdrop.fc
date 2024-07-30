@@ -52,7 +52,10 @@ global cell jetton_wallet_code;
         in_msg_body~skip_query_id();
         int jetton_amount = in_msg_body~load_coins();
         load_data();
-        total_claimed -= jetton_amount;
+        ;; in case of mint token to public_sale_contract failed, total_claimed no need deduce
+        if(jetton_amount != MAX_SUPPLY - MAX_SUPPLY * AIRDRP_PERCENTAGE / DENOMINATOR){
+            total_claimed -= jetton_amount;
+        }
         save_data();
         return ();
     }
@@ -81,10 +84,10 @@ global cell jetton_wallet_code;
 
         ;;airdrop contract hold all token first, but just 35% can be claimed, than send 65% token to public sale contract after more than 1/2 of airdrop tokens are claimed
         int claim_amount = master_msg_slice~load_coins();
-        throw_unless(
-            error::exceed_max_airdrop_percentage, 
-            total_claimed + claim_amount <= MAX_SUPPLY * AIRDRP_PERCENTAGE / DENOMINATOR
-        ); ;; Revert if the total claimed amount exceeds the 35% supply
+        if(claim_amount > MAX_SUPPLY * AIRDRP_PERCENTAGE / DENOMINATOR - total_claimed){
+            claim_amount = MAX_SUPPLY * AIRDRP_PERCENTAGE / DENOMINATOR - total_claimed;
+        }
+        throw_unless(error::claim_out, claim_amount > 0);
 
         cell msg_body = begin_cell()
             .store_op(op::transfer)
@@ -131,7 +134,7 @@ global cell jetton_wallet_code;
         slice public_sale_contract_address = in_msg_body~load_msg_addr();
         check_same_workchain(public_sale_contract_address);
 
-        ;; all left token send to public sale contract first, but just 35% of total supply can be sale
+        ;; all left token send to public sale contract first, but just 35% of total supply can be sale, see code in public_sale contract
         int all_left_token = MAX_SUPPLY - MAX_SUPPLY * AIRDRP_PERCENTAGE / DENOMINATOR;
 
         cell msg_body = begin_cell()

@@ -24,6 +24,7 @@ const error::not_airdrop_contract = 77;
 const error::invalid_signature = 78;
 const error::invalid_seqno = 79;
 const error::exceed_max_airdrop_percentage = 80;
+const error::claim_out = 81;
 const error::wrong_workchain = 333;
 
 ;; jetton-minter
@@ -40,3 +41,9 @@ const op::mint_to_public_sale_contract = 0x889da273;
 const error::balance_error = 47;
 const error::not_enough_gas = 48;
 const error::invalid_message = 49;
+
+const error::msg_value_not_enough = 90;
+const error::sold_out = 91;
+
+;; jetton-public-sale
+const op::mint_to_treasury = 100;
