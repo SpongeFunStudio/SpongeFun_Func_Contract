@@ -259,3 +259,8 @@ slice get_wallet_address(slice owner_address) method_id {
     load_data();
     return calculate_user_jetton_wallet_address(owner_address, my_address(), jetton_wallet_code);
 }
+
+int get_smc_balance() method_id {
+    [int balance, _] = get_balance(); ;; get_balance() returns tuple [(int)balance of TON, (cell)extra currency]
+    return balance;
+}

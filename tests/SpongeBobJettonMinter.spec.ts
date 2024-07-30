@@ -51,7 +51,6 @@ describe('SpongeBobJettonMinter', () => {
                 },
                 spongeBobMinterCode
             ));
-        console.log("spongeBobJettonMinter address:", spongeBobJettonMinter.address);
         
         spongeBobAirdropContract = blockchain.openContract(
             SpongeBobJettonAirdrop.createFromConfig({
@@ -61,7 +60,6 @@ describe('SpongeBobJettonMinter', () => {
                 },
                 spongeBobAirdropCode
             ));
-        console.log("spongeBobAirdropContract address:", spongeBobAirdropContract.address);
 
         userWallet = async (address:Address) => blockchain.openContract(
                           SpongeBobJettonWallet.createFromAddress(
@@ -167,5 +165,49 @@ describe('SpongeBobJettonMinter', () => {
             exitCode: Errors.invalid_airdrop_amount,
         });   
         expect(await spongeBobJettonMinter.getTotalSupply()).toEqual(initialTotalSupply);
+    });
+
+    it('minter admin can change admin', async () => {
+        const adminBefore = await spongeBobJettonMinter.getAdminAddress();
+        expect(adminBefore).toEqualAddress(deployer.address);
+        let res = await spongeBobJettonMinter.sendChangeAdmin(deployer.getSender(), notDeployer.address);
+        expect(res.transactions).toHaveTransaction({
+            from: deployer.address,
+            on: spongeBobJettonMinter.address,
+            success: true
+        });
+
+	    const adminAfter = await spongeBobJettonMinter.getAdminAddress();
+        expect(adminAfter).toEqualAddress(notDeployer.address);
+        await spongeBobJettonMinter.sendChangeAdmin(notDeployer.getSender(), deployer.address);
+        expect((await spongeBobJettonMinter.getAdminAddress()).equals(deployer.address)).toBe(true);
+    });
+
+    it('not a minter admin can not change admin', async () => {
+        const adminBefore = await spongeBobJettonMinter.getAdminAddress();
+        expect(adminBefore).toEqualAddress(deployer.address);
+        let changeAdmin = await spongeBobJettonMinter.sendChangeAdmin(notDeployer.getSender(), notDeployer.address);
+        expect((await spongeBobJettonMinter.getAdminAddress()).equals(deployer.address)).toBe(true);
+        expect(changeAdmin.transactions).toHaveTransaction({
+            from: notDeployer.address,
+            on: spongeBobJettonMinter.address,
+            aborted: true,
+            exitCode: Errors.not_owner, // error::unauthorized_change_admin_request
+        });
+    });
+
+    it('anyone can top up', async () => {
+        const adminBefore = await spongeBobJettonMinter.getAdminAddress();
+        expect(adminBefore).toEqualAddress(deployer.address);
+        const beforeBalance = await spongeBobJettonMinter.getBalance();
+
+        let topUpTx = await spongeBobJettonMinter.sendTopUp(notDeployer.getSender());
+        expect(topUpTx.transactions).toHaveTransaction({
+            from: notDeployer.address,
+            on: spongeBobJettonMinter.address,
+            success: true
+        });
+        const afterBalance = await spongeBobJettonMinter.getBalance();
+        expect(afterBalance).toBeLessThan(beforeBalance + toNano('1'));
     });
 });

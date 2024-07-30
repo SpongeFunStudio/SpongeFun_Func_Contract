@@ -128,4 +128,9 @@ export class SpongeBobJettonWallet implements Contract {
         });
 
     }
+
+    async getBalance(provider: ContractProvider): Promise<bigint> {
+        const balance = await provider.get('get_smc_balance', []);
+        return balance.stack.readBigNumber();
+    }
 }

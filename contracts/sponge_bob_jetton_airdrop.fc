@@ -136,3 +136,8 @@ global slice admin_address;
 
     throw(error::wrong_op);
 }
+
+int get_smc_balance() method_id {
+    [int balance, _] = get_balance(); ;; get_balance() returns tuple [(int)balance of TON, (cell)extra currency]
+    return balance;
+}

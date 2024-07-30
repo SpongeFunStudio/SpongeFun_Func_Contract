@@ -92,7 +92,7 @@ export class SpongeBobJettonMinter implements Contract {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: SpongeBobJettonMinter.topUpMessage(),
-            value: value + toNano('1'),
+            value: value,
         });
     }
 
@@ -182,5 +182,10 @@ export class SpongeBobJettonMinter implements Contract {
     async getMintable(provider: ContractProvider) {
         let res = await this.getJettonData(provider);
         return res.mintable;
+    }
+
+    async getBalance(provider: ContractProvider): Promise<bigint> {
+        const balance = await provider.get('get_smc_balance', []);
+        return balance.stack.readBigNumber();
     }
 }
