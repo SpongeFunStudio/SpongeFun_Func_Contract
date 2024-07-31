@@ -14,6 +14,7 @@ let blockchain: Blockchain;
 let deployer: SandboxContract<TreasuryContract>;
 let notDeployer: SandboxContract<TreasuryContract>;
 let user: SandboxContract<TreasuryContract>;
+let user2: SandboxContract<TreasuryContract>;
 let spongeBobJettonMinter: SandboxContract<SpongeBobJettonMinter>;
 let spongeBobAirdropContract: SandboxContract<SpongeBobJettonAirdrop>;
 let spongeBobJettonPublicSale: SandboxContract<SpongeBobJettonPublicSale>;
@@ -45,6 +46,7 @@ describe('SpongeBobJettonPublicSale', () => {
         deployer = await blockchain.treasury('deployer');
         notDeployer  = await blockchain.treasury('notDeployer');
         user = await blockchain.treasury('user');
+        user2 = await blockchain.treasury('user2');
 
         jwallet_code = await compile('SpongeBobJettonWallet');
 
@@ -162,6 +164,120 @@ describe('SpongeBobJettonPublicSale', () => {
             success: true,
         });
         const afterBalance = await userJettonWallet.getJettonBalance();
-        expect(afterBalance).toEqual(beforeBalance + toNano("500"));
+        expect(afterBalance).toEqual(beforeBalance + toNano("500") * BigInt(100000));
+    });
+
+    it('not a admin can not send mintToTreasury message', async () => {
+        const res = await spongeBobJettonPublicSale.sendMintToTreasuryMessage(
+            notDeployer.getSender(),
+            toNano('0.05'),
+            user.address
+        );
+        expect(res.transactions).toHaveTransaction({
+            from: notDeployer.address,
+            on: spongeBobJettonPublicSale.address,
+            aborted: true,
+            exitCode: Errors.not_owner, // error::unauthorized_change_admin_request
+        });
+    });
+
+    it('can send mintToTreasury message after sold out', async () => {
+        await spongeBobJettonPublicSale.sendStartSaleTokenMessage(
+            deployer.getSender(),
+            toNano('0.05')
+        );
+        const user2JettonWallet = await userWallet(user2.address);
+        const res1 = await spongeBobJettonPublicSale.sendBuyTokenMessage(
+            user2.getSender(),
+            toNano('3510.1')
+        );
+        expect(res1.transactions).toHaveTransaction({
+            from: user2.address,
+            on: spongeBobJettonPublicSale.address,
+            success: true,
+        });
+        const afterBalance = await user2JettonWallet.getJettonBalance();
+        expect(afterBalance).toEqual(toNano("3500") * BigInt(100000));
+
+        const publicSaleContractWallet = await userWallet(spongeBobJettonPublicSale.address);
+        const publicSaleContractBalance = await publicSaleContractWallet.getJettonBalance();
+        expect(publicSaleContractBalance).toEqual(toNano("300000000"));
+
+        expect(await spongeBobJettonPublicSale.getTotalSale()).toEqual(toNano("350000000"));
+
+        let treasury: SandboxContract<TreasuryContract> = await blockchain.treasury('treasury');
+        let treasuryWallet = await userWallet(treasury.address);
+        const res = await spongeBobJettonPublicSale.sendMintToTreasuryMessage(
+            deployer.getSender(),
+            toNano('0.05'),
+            treasury.address
+        );
+        expect(res.transactions).toHaveTransaction({
+            from: deployer.address,
+            on: spongeBobJettonPublicSale.address,
+            success: true
+        });
+        const treasuryBalance = await treasuryWallet.getJettonBalance();
+        expect(treasuryBalance).toEqual(toNano("200000000"));
+
+        let team: SandboxContract<TreasuryContract> = await blockchain.treasury('team');
+        let teamWallet = await userWallet(team.address);
+        const res2 = await spongeBobJettonPublicSale.sendMintToTeamMessage(
+            deployer.getSender(),
+            toNano('0.05'),
+            team.address
+        );
+        expect(res2.transactions).toHaveTransaction({
+            from: deployer.address,
+            on: spongeBobJettonPublicSale.address,
+            success: true
+        });
+        const teamBalance = await teamWallet.getJettonBalance();
+        expect(teamBalance).toEqual(toNano("100000000"));
+    });
+
+    it('can not send mintToTreasury message before sold out', async () => {
+        const res = await spongeBobJettonPublicSale.sendMintToTreasuryMessage(
+            deployer.getSender(),
+            toNano('0.05'),
+            user.address
+        );
+        expect(res.transactions).toHaveTransaction({
+            from: deployer.address,
+            on: spongeBobJettonPublicSale.address,
+            aborted: true,
+            exitCode: Errors.not_sold_out,
+        });
+    });
+
+    it('admin can change admin', async () => {
+        const adminBefore = await spongeBobJettonPublicSale.getAdminAddress();
+        expect(adminBefore).toEqualAddress(deployer.address);
+        let res = await spongeBobJettonPublicSale.sendChangeAdmin(deployer.getSender(), notDeployer.address);
+        expect(res.transactions).toHaveTransaction({
+            from: deployer.address,
+            on: spongeBobJettonPublicSale.address,
+            success: true
+        });
+
+	    const adminAfter = await spongeBobJettonPublicSale.getAdminAddress();
+        expect(adminAfter).toEqualAddress(notDeployer.address);
+        await spongeBobJettonPublicSale.sendChangeAdmin(notDeployer.getSender(), deployer.address);
+        expect((await spongeBobJettonPublicSale.getAdminAddress()).equals(deployer.address)).toBe(true);
+    });
+
+    it('not a admin can not start public sale', async () => {
+        const adminBefore = await spongeBobJettonPublicSale.getAdminAddress();
+        expect(adminBefore).toEqualAddress(deployer.address);
+        const res = await spongeBobJettonPublicSale.sendStartSaleTokenMessage(
+            notDeployer.getSender(),
+            toNano('0.05')
+        );
+        expect(res.transactions).toHaveTransaction({
+            from: notDeployer.address,
+            on: spongeBobJettonPublicSale.address,
+            aborted: true,
+            exitCode: Errors.not_owner, // error::unauthorized_change_admin_request
+        });
     });
 });

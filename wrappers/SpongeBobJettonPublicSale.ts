@@ -1,4 +1,4 @@
-import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from '@ton/core';
+import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode, toNano } from '@ton/core';
 import { Op } from './JettonConstants';
 
 export type SpongeBobJettonPublicSaleConfig = {
@@ -46,11 +46,45 @@ export class SpongeBobJettonPublicSale implements Contract {
         });
     }
 
+    async sendMintToTreasuryMessage(provider: ContractProvider, via: Sender, value: bigint, treasury: Address) {
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell().storeUint(Op.mint_to_treasury, 32).storeUint(0, 64)
+                .storeAddress(treasury)
+                .endCell(),
+        });
+    }
+
+    async sendMintToTeamMessage(provider: ContractProvider, via: Sender, value: bigint, team: Address) {
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell().storeUint(Op.mint_to_team, 32).storeUint(0, 64)
+                .storeAddress(team)
+                .endCell(),
+        });
+    }
+
     async sendStartSaleTokenMessage(provider: ContractProvider, via: Sender, value: bigint) {
         await provider.internal(via, {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: beginCell().storeUint(Op.open_sale, 32).storeUint(0, 64).endCell(),
+        });
+    }
+
+    static changeAdminMessage(newOwner: Address) {
+        return beginCell().storeUint(Op.change_admin, 32).storeUint(0, 64) // op, queryId
+            .storeAddress(newOwner)
+            .endCell();
+    }
+
+    async sendChangeAdmin(provider: ContractProvider, via: Sender, newOwner: Address) {
+        await provider.internal(via, {
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: SpongeBobJettonPublicSale.changeAdminMessage(newOwner),
+            value: toNano("0.1"),
         });
     }
 
