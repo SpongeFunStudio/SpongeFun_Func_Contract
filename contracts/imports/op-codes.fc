@@ -45,4 +45,9 @@ const error::msg_value_not_enough = 90;
 const error::sold_out = 91;
 
 ;; jetton-public-sale
-const op::mint_to_treasury = 100;
+
+const error::sale_not_start = 95;
+const error::not_sold_out = 96;
+
+const op::mint_to_treasury = 0xe802c6b3;
+const op::open_sale = 0x5cbf8120;

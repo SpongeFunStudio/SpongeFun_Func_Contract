@@ -5,6 +5,7 @@
 #include "imports/workchain.fc";
 
 global int total_sale;
+global int start_sale;
 global slice sponge_bob_minter_address;
 global slice admin_address;
 global cell jetton_wallet_code;
@@ -15,6 +16,7 @@ global cell jetton_wallet_code;
     var ds = get_data().begin_parse();
 
     total_sale = ds~load_coins();
+    start_sale = ds~load_bool();
     sponge_bob_minter_address = ds~load_msg_addr();
     admin_address = ds~load_msg_addr();
     jetton_wallet_code = ds~load_ref();
@@ -26,6 +28,7 @@ global cell jetton_wallet_code;
     set_data(
         begin_cell()
             .store_coins(total_sale)
+            .store_bool(start_sale)
             .store_slice(sponge_bob_minter_address)
             .store_slice(admin_address)
             .store_ref(jetton_wallet_code)
@@ -39,7 +42,7 @@ global cell jetton_wallet_code;
 
     if (msg_flags & 1) { ;; is bounced
         in_msg_body~skip_bounced_prefix();
-        ;; process only mint bounces
+        ;; process only buy token
         ifnot (in_msg_body~load_op() == op::transfer) {
             return ();
         }
@@ -52,14 +55,14 @@ global cell jetton_wallet_code;
     }
 
     slice sender_address = in_msg_full_slice~load_msg_addr();
-    (int op, int query_id) = in_msg_body~load_op_and_query_id();
     load_data();
 
     if (in_msg_body.slice_empty?()) { ;; buy jettons for Toncoin
 
         check_same_workchain(sender_address);
+        throw_unless(error::sale_not_start, start_sale);
 
-        int ton_for_transfer_msg = 10000000; ;; for transfer message
+        int ton_for_transfer_msg = 100000000; ;; 0.1 ton for transfer token message
         int buy_amount = msg_value - ton_for_transfer_msg;
         throw_unless(error::msg_value_not_enough, buy_amount > 0);
 
@@ -74,7 +77,6 @@ global cell jetton_wallet_code;
         );
 
         int send_back_ton = msg_value - jetton_amount / RATE;
-
         var msg_body = begin_cell()
             .store_uint(op::transfer, 32)
             .store_uint(0, 64) ;; quert_id
@@ -109,11 +111,13 @@ global cell jetton_wallet_code;
         return ();
     }
 
+    (int op, int query_id) = in_msg_body~load_op_and_query_id();
     if (op == op::mint_to_treasury) {
         throw_unless(error::not_owner, equal_slices_bits(sender_address, admin_address));
+        
         ;;can release team and treasury token to linea invest contract after public sale sold out
         throw_unless(
-            error::not_owner, 
+            error::not_sold_out, 
             total_sale == MAX_SUPPLY * PUBLIC_SALE_PERCENTAGE / DENOMINATOR
         );
 
@@ -152,6 +156,13 @@ global cell jetton_wallet_code;
         save_data();
     }
 
+    if (op == op::open_sale) {
+        throw_unless(error::not_owner, equal_slices_bits(sender_address, admin_address));
+        start_sale = TRUE;
+        save_data();
+        return ();
+    }
+
     if (op == op::upgrade) {
         throw_unless(error::not_owner, equal_slices_bits(sender_address, admin_address));
         (cell new_data, cell new_code) = (in_msg_body~load_ref(), in_msg_body~load_ref());
@@ -174,4 +185,14 @@ global cell jetton_wallet_code;
     }
 
     throw(error::wrong_op);
+}
+
+int get_smc_balance() method_id {
+    [int balance, _] = get_balance(); ;; get_balance() returns tuple [(int)balance of TON, (cell)extra currency]
+    return balance;
+}
+
+(int, int, slice, slice, cell) get_publi_sale_status() method_id {
+    load_data();
+    return (total_sale, start_sale, sponge_bob_minter_address, admin_address, jetton_wallet_code);
 }

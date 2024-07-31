@@ -15,6 +15,10 @@ export abstract class Op {
     static top_up = 0xd372158c;
     static change_metadata_url = 0xcb862902;
 
+    // SpongePublicSale Contract
+    static open_sale = 0x5cbf8120
+    static mint_to_treasury = 0xe802c6b3;
+
     // SpongeAirdrop Contract
     static claim_airdrop = 0xdcee4012
     static mint_to_public_sale_contract = 0x889da273;
@@ -35,6 +39,8 @@ export abstract class Errors {
     static can_not_start_public_sale = 76;
     static invalid_signature = 78;
     static repeat_signature = 79;
+
+    static sale_not_start = 95;
 }
 
 
