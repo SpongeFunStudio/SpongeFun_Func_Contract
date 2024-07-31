@@ -7,16 +7,17 @@ export type SpongeBobJettonAirdropConfig = {
     sponge_bob_minter_address: Address;
     admin_address: Address;
     jetton_wallet_code: Cell;
+    claimed_hashmap?: Cell;
 };
 
 export function spongeBobJettonAirdropConfigToCell(config: SpongeBobJettonAirdropConfig): Cell {
     return beginCell()
-            .storeUint(0, 32)
             .storeCoins(0)
             .storeBuffer(config.public_key)
             .storeAddress(config.sponge_bob_minter_address)
             .storeAddress(config.admin_address)
             .storeRef(config.jetton_wallet_code)
+            .storeMaybeRef(config.claimed_hashmap)
             .endCell();
 }
 
@@ -53,12 +54,13 @@ export class SpongeBobJettonAirdrop implements Contract {
             .endCell();
         const sig = sign(msgToSign.hash(), private_key);
         
-        const claimAirdropMsg = beginCell().storeBuffer(sig)
-            .storeSlice(msgToSign.asSlice())
-            .endCell();
+        // const claimAirdropMsg = beginCell()
+        //     .storeSlice(msgToSign.asSlice())
+        //     .endCell();
 
         return beginCell().storeUint(Op.claim_airdrop, 32).storeUint(0, 64) // op, queryId
-            .storeRef(claimAirdropMsg)
+            .storeBuffer(sig)
+            .storeRef(msgToSign)
             .endCell();
     }
 
@@ -124,14 +126,12 @@ export class SpongeBobJettonAirdrop implements Contract {
     async getAirdropStatus(provider: ContractProvider) {
         let res = await provider.get('get_airdrop_status', []);
 
-        let seqno = res.stack.readBigNumber();
         let total_claimed = res.stack.readBigNumber();
         let public_key = res.stack.readBigNumber();
         let sponge_bob_minter_address = res.stack.readAddress();
         let admin_address = res.stack.readAddress();
         let walletCode = res.stack.readCell();
         return {
-            seqno,
             total_claimed,
             public_key,
             sponge_bob_minter_address,
