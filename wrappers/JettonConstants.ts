@@ -33,6 +33,8 @@ export abstract class Errors {
     static invalid_mesage = 49;
     static discovery_fee_not_matched = 75;
     static can_not_start_public_sale = 76;
+    static invalid_signature = 78;
+    static repeat_signature = 79;
 }
 
 

@@ -151,6 +151,46 @@ describe('SpongeBobJettonAirdrop', () => {
         expect(res1.total_claimed).toEqual(res0.total_claimed + claimAmount);
     });
 
+    it('should failed to claim token if use error signature', async () => {
+        const claimAmount = toNano("1000");
+        const res0 = await spongeBobAirdropContract.getAirdropStatus();
+        expect(res0.total_claimed).toEqual(0n);
+        let fakekp = await randomKp();
+
+        const res = await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+            user.getSender(),
+            100,
+            claimAmount,
+            fakekp.secretKey
+        );
+        expect(res.transactions).toHaveTransaction({
+            on: spongeBobAirdropContract.address,
+            aborted: true,
+            exitCode: Errors.invalid_signature,
+        });
+    });
+
+    it('should failed to claim token if use signature twice', async () => {
+        const claimAmount = toNano("1000");
+        await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+            user.getSender(),
+            12378,
+            claimAmount,
+            kp.secretKey
+        );
+        const res = await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+            user.getSender(),
+            12378,
+            claimAmount,
+            kp.secretKey
+        );
+        expect(res.transactions).toHaveTransaction({
+            on: spongeBobAirdropContract.address,
+            aborted: true,
+            exitCode: Errors.repeat_signature,
+        });
+    });
+
     it('should failed to mint_to_public_sale_contract before 1/2 airdrop token be claimed', async () => {
         const res2 = await spongeBobAirdropContract.sendMintToPublicSaleContractMessage(
             deployer.getSender(),

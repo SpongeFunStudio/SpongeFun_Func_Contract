@@ -85,7 +85,7 @@ global cell claimed_hashmap;
         ); ;; Revert on wrong signature
 
         (_, int success) = claimed_hashmap.udict_get_ref?(256, hash);
-        throw_unless(error::invalid_seqno, success == 0); ;; Revert if the sequence number of the incoming message does not match the stored sequence number
+        throw_unless(error::repeat_signature, success == 0); ;; Revert if the sequence number of the incoming message does not match the stored sequence number
 
         int msg_seqno = master_msg_slice~load_uint(32);
         ;;airdrop contract hold all token first, but just 35% can be claimed, than send 65% token to public sale contract after more than 1/2 of airdrop tokens are claimed
