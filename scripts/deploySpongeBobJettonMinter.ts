@@ -1,25 +1,25 @@
-import { Address, toNano } from '@ton/core';
-import { SpongeBobJettonMinter } from '../wrappers/SpongeBobJettonMinter';
+import { toNano } from '@ton/core';
+import { jettonContentToCell, SpongeBobJettonMinter } from '../wrappers/SpongeBobJettonMinter';
 import { compile, NetworkProvider } from '@ton/blueprint';
-import { jettonWalletCodeFromLibrary } from '../wrappers/ui-utils';
+import { promptUserFriendlyAddress } from '../wrappers/ui-utils';
 
 export async function run(provider: NetworkProvider) {
     
-    const admin_address = Address.parse("")
+    const isTestnet = provider.network() !== 'mainnet';
+    const ui = provider.ui();
 
-    const jettonWalletCodeRaw = await compile('SpongeBobJettonWallet');
-    const jettonWalletCode = jettonWalletCodeFromLibrary(jettonWalletCodeRaw);
-    const jettonMetadataUri = "https://jettonowner.com/jetton.json";
+    const jwallet_code = await compile('SpongeBobJettonWallet');
+    const adminAddress = await promptUserFriendlyAddress("Enter the address of the jetton owner (admin):", ui, isTestnet);
 
-    const spongeBobJettonMinter = provider.open(SpongeBobJettonMinter.createFromConfig(
-        {
-            mintable: true,
-            admin_address: admin_address,
-            jetton_wallet_code: jettonWalletCode,
-            jetton_content: {uri: jettonMetadataUri}
-        },
-        await compile('SpongeBobJettonMinter'))
-    );
+    const spongeBobJettonMinter = provider.open(
+            SpongeBobJettonMinter.createFromConfig({
+                    mintable: true,
+                    admin_address: adminAddress.address,
+                    jetton_wallet_code: jwallet_code,
+                    jetton_content: jettonContentToCell({uri: "https://jettonowner.com/jetton.json"})
+                },
+                await compile('SpongeBobJettonMinter')
+        ));
 
     await spongeBobJettonMinter.sendDeploy(provider.sender(), toNano('0.05'));
 
