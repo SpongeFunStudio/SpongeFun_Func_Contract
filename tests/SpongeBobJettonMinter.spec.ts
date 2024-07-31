@@ -104,7 +104,7 @@ describe('SpongeBobJettonMinter', () => {
             deployer.getSender(),
             spongeBobAirdropContract.address,
             airdropValue,
-            null, null, null
+            null, deployer.address, null
         );
         expect(res.transactions).toHaveTransaction({
             on: airdropWalletJettonWallet.address,
@@ -134,7 +134,7 @@ describe('SpongeBobJettonMinter', () => {
             notDeployer.getSender(),
             spongeBobAirdropContract.address,
             airdropValue,
-            null, null, null
+            null, notDeployer.address, null
         );
         expect(unAuthMintResult.transactions).toHaveTransaction({
             from: notDeployer.address,
@@ -154,7 +154,7 @@ describe('SpongeBobJettonMinter', () => {
             deployer.getSender(),
             spongeBobAirdropContract.address,
             airdropValue,
-            null, null, null
+            null, deployer.address, null
         );
         expect(unAuthMintResult.transactions).toHaveTransaction({
             from: deployer.address,

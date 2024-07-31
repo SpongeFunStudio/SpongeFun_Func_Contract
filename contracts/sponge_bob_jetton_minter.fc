@@ -44,8 +44,7 @@ global cell metadata_uri;
     );
 }
 
-() mint_tokens(slice to_address, cell jetton_wallet_code, int ton_amount, cell master_msg, int need_state_init) impure inline {
-    raw_reserve(ONE_TON, RESERVE_REGULAR); ;; reserve for storage fees
+() mint_tokens(slice to_address, cell jetton_wallet_code, cell master_msg, int need_state_init) impure inline {
 
     cell state_init = calculate_jetton_wallet_state_init(to_address, my_address(), jetton_wallet_code);
     slice to_wallet_address = calculate_jetton_wallet_address(state_init);
@@ -54,7 +53,7 @@ global cell metadata_uri;
     var msg = begin_cell()
     .store_msg_flags_and_address_none(BOUNCEABLE)
     .store_slice(to_wallet_address) ;; dest
-    .store_coins(ton_amount);
+    .store_coins(0);
 
     if (need_state_init) {
         msg = msg.store_statinit_ref_and_body_ref(state_init, master_msg);
@@ -62,7 +61,7 @@ global cell metadata_uri;
         msg = msg.store_only_body_ref(master_msg);
     }
 
-    send_raw_message(msg.end_cell(), SEND_MODE_PAY_FEES_SEPARATELY | SEND_MODE_BOUNCE_ON_ACTION_FAIL);
+    send_raw_message(msg.end_cell(), SEND_MODE_CARRY_ALL_REMAINING_MESSAGE_VALUE | SEND_MODE_BOUNCE_ON_ACTION_FAIL);
 }
 
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
@@ -87,9 +86,6 @@ global cell metadata_uri;
     }
 
     slice sender_address = in_msg_full_slice~load_msg_addr();
-    int fwd_fee_from_in_msg = in_msg_full_slice~retrieve_fwd_fee();
-    int fwd_fee = get_original_fwd_fee(MY_WORKCHAIN, fwd_fee_from_in_msg); ;; we use message fwd_fee for estimation of forward_payload costs
-
     (int op, int query_id) = in_msg_body~load_op_and_query_id();
     load_data();
 
@@ -98,7 +94,6 @@ global cell metadata_uri;
         throw_unless(error::not_owner, equal_slices_bits(sender_address, admin_address));
         slice to_address = in_msg_body~load_msg_addr();
         check_same_workchain(to_address);
-        int ton_amount = in_msg_body~load_coins();
         cell master_msg = in_msg_body~load_ref();
         in_msg_body.end_parse();
 
@@ -117,10 +112,7 @@ global cell metadata_uri;
         int forward_ton_amount = master_msg_slice~load_coins(); ;; forward_ton_amount
         check_either_forward_payload(master_msg_slice); ;; either_forward_payload
 
-        ;; a little more than needed, it’s ok since it’s sent by the admin and excesses will return back
-        check_amount_is_enough_to_transfer(ton_amount, forward_ton_amount, fwd_fee);
-
-        mint_tokens(to_address, jetton_wallet_code, ton_amount, master_msg, TRUE);
+        mint_tokens(to_address, jetton_wallet_code, master_msg, TRUE);
         total_supply += jetton_amount;
         if(total_supply == MAX_SUPPLY) {
             mintable = FALSE;

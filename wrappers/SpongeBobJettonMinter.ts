@@ -50,7 +50,7 @@ export class SpongeBobJettonMinter implements Contract {
         });
     }
 
-    static mintToAirdropContractMessage(to: Address, jetton_amount: bigint, from?: Address | null, response?: Address | null, customPayload?: Cell | null, forward_ton_amount: bigint = 0n, total_ton_amount: bigint = 0n) {
+    static mintToAirdropContractMessage(to: Address, jetton_amount: bigint, from?: Address | null, response?: Address | null, customPayload?: Cell | null, forward_ton_amount: bigint = 0n) {
         const mintToAirdropMsg = beginCell().storeUint(Op.internal_transfer, 32)
             .storeUint(0, 64)
             .storeCoins(jetton_amount)
@@ -61,7 +61,6 @@ export class SpongeBobJettonMinter implements Contract {
             .endCell();
         return beginCell().storeUint(Op.mint_to_airdrop_contract, 32).storeUint(0, 64) // op, queryId
             .storeAddress(to)
-            .storeCoins(total_ton_amount)
             .storeRef(mintToAirdropMsg)
             .endCell();
     }
@@ -74,12 +73,12 @@ export class SpongeBobJettonMinter implements Contract {
         from?: Address | null,
         response_addr?: Address | null,
         customPayload?: Cell | null,
-        forward_ton_amount: bigint = toNano('0.05'), total_ton_amount: bigint = toNano('1')
+        forward_ton_amount: bigint = toNano('0'), total_ton_amount: bigint = toNano('1')
     ) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: SpongeBobJettonMinter.mintToAirdropContractMessage(to, jetton_amount, from, response_addr, customPayload, forward_ton_amount, total_ton_amount),
-            value: total_ton_amount + toNano('1'),
+            body: SpongeBobJettonMinter.mintToAirdropContractMessage(to, jetton_amount, from, response_addr, customPayload, forward_ton_amount),
+            value: total_ton_amount,
         });
     }
 
