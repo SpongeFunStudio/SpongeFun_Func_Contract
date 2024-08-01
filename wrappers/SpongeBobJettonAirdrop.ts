@@ -43,13 +43,13 @@ export class SpongeBobJettonAirdrop implements Contract {
     }
 
     static claimAirdropTokenMessage (
-        seqno: number,
+        timestamp: number,
         claim_amount: bigint,
         private_key: Buffer
     ) {
         
         const msgToSign = beginCell()
-                .storeUint(seqno, 32)
+                .storeUint(timestamp, 32)
                 .storeCoins(claim_amount)
             .endCell();
         const sig = sign(msgToSign.hash(), private_key);
@@ -67,14 +67,14 @@ export class SpongeBobJettonAirdrop implements Contract {
     async sendClaimAirdropTokenMessage(
         provider: ContractProvider,
         via: Sender,
-        seqno: number,
+        timestamp: number,
         jetton_amount: bigint,
         private_key: Buffer,
         total_ton_amount: bigint = toNano('1')
     ) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: SpongeBobJettonAirdrop.claimAirdropTokenMessage(seqno, jetton_amount, private_key),
+            body: SpongeBobJettonAirdrop.claimAirdropTokenMessage(timestamp, jetton_amount, private_key),
             value: total_ton_amount,
         });
     }

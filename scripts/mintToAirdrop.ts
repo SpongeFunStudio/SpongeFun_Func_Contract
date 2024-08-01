@@ -3,10 +3,8 @@ import { SpongeBobJettonMinter } from '../wrappers/SpongeBobJettonMinter';
 import { Address, toNano } from '@ton/core';
 
 export async function run(provider: NetworkProvider) {
-    const isTestnet = provider.network() !== 'mainnet';
 
     const ui = provider.ui();
-
     const jettonMinterAddress = Address.parse('EQAPYZ_WF9dXF7v1lraTU2YkfRwgl7hQE2DvcajTFpUU2xDC');
 
     try {
