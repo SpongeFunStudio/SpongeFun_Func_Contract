@@ -5,7 +5,7 @@ import { Address, toNano } from '@ton/core';
 export async function run(provider: NetworkProvider) {
 
     const ui = provider.ui();
-    const jettonMinterAddress = Address.parse('EQAPYZ_WF9dXF7v1lraTU2YkfRwgl7hQE2DvcajTFpUU2xDC');
+    const jettonMinterAddress = Address.parse('EQCv7QtKCd_FhoJ3iF3R9V9Q6V1NmvoAdMKVee2NNxue0jGO');
 
     try {
         const spongeBobJettonMinter = provider.open(
@@ -15,7 +15,7 @@ export async function run(provider: NetworkProvider) {
         const airdropValue = toNano("1000000000");
         await spongeBobJettonMinter.sendMintToClaimAirdropMessage(
             provider.sender(),
-            Address.parse('EQBOf-KRgE3chy41JasoAFlELSxJq78mNLwbkhGYD5bmaRQP'),
+            Address.parse('EQA1SlXAI8ZFKkBuKCIocdwy0MR76y8i66yCP9CGBhB7pIFb'),
             airdropValue,
             null,
             provider.sender().address
