@@ -94,6 +94,10 @@ global cell claimed_hashmap;
             claim_amount = MAX_SUPPLY * AIRDRP_PERCENTAGE / DENOMINATOR - total_claimed;
         }
         throw_unless(error::claim_out, claim_amount > 0);
+        throw_unless(
+            error::exceed_max_claim_amount, 
+            claim_amount <= MAX_SUPPLY * MAX_PERCENTAGE_EACH_CLAIM / DENOMINATOR
+        );
 
         cell msg_body = begin_cell()
             .store_op(op::transfer)

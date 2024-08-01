@@ -22,8 +22,8 @@ const error::not_mintable = 75;
 const error::can_not_start_public_sale = 76;
 const error::invalid_signature = 78;
 const error::repeat_signature = 79;
-const error::exceed_max_airdrop_percentage = 80;
-const error::claim_out = 81;
+const error::claim_out = 80;
+const error::exceed_max_claim_amount = 81;
 const error::wrong_workchain = 333;
 
 ;; jetton-minter

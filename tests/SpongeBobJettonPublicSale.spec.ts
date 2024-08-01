@@ -103,13 +103,15 @@ describe('SpongeBobJettonPublicSale', () => {
             success: true,
         });
 
-        const claimAmount = toNano("300000000");
-        await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
-            user.getSender(),
-            0,
-            claimAmount,
-            kp.secretKey
-        );
+        const claimAmount = toNano("100000000");
+        for (let i = 0; i < 2; i++) {
+            await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+                user.getSender(),
+                i,
+                claimAmount,
+                kp.secretKey
+            );
+        }
         await spongeBobAirdropContract.sendMintToPublicSaleContractMessage(
             deployer.getSender(),
             spongeBobJettonPublicSale.address
@@ -152,11 +154,11 @@ describe('SpongeBobJettonPublicSale', () => {
 
         const userJettonWallet = await userWallet(user.address);
         const beforeBalance = await userJettonWallet.getJettonBalance();
-        expect(beforeBalance).toEqual(toNano("300000000"));
+        expect(beforeBalance).toEqual(toNano("200000000"));
 
         const res1 = await spongeBobJettonPublicSale.sendBuyTokenMessage(
             user.getSender(),
-            toNano('500.1')
+            toNano('1.1')
         );
         expect(res1.transactions).toHaveTransaction({
             from: user.address,
@@ -164,7 +166,7 @@ describe('SpongeBobJettonPublicSale', () => {
             success: true,
         });
         const afterBalance = await userJettonWallet.getJettonBalance();
-        expect(afterBalance).toEqual(beforeBalance + toNano("500") * BigInt(100000));
+        expect(afterBalance).toEqual(beforeBalance + toNano("1") * BigInt(100000000));
     });
 
     it('not a admin can not send mintToTreasury message', async () => {
@@ -187,17 +189,24 @@ describe('SpongeBobJettonPublicSale', () => {
             toNano('0.05')
         );
         const user2JettonWallet = await userWallet(user2.address);
-        const res1 = await spongeBobJettonPublicSale.sendBuyTokenMessage(
+        await spongeBobJettonPublicSale.sendBuyTokenMessage(
             user2.getSender(),
-            toNano('3510.1')
+            toNano('1.1')
         );
-        expect(res1.transactions).toHaveTransaction({
-            from: user2.address,
-            on: spongeBobJettonPublicSale.address,
-            success: true,
-        });
+        await spongeBobJettonPublicSale.sendBuyTokenMessage(
+            user2.getSender(),
+            toNano('1.1')
+        );
+        await spongeBobJettonPublicSale.sendBuyTokenMessage(
+            user2.getSender(),
+            toNano('1.1')
+        );
+        await spongeBobJettonPublicSale.sendBuyTokenMessage(
+            user2.getSender(),
+            toNano('0.6')
+        );
         const afterBalance = await user2JettonWallet.getJettonBalance();
-        expect(afterBalance).toEqual(toNano("3500") * BigInt(100000));
+        expect(afterBalance).toEqual(toNano("3.5") * BigInt(100000000));
 
         const publicSaleContractWallet = await userWallet(spongeBobJettonPublicSale.address);
         const publicSaleContractBalance = await publicSaleContractWallet.getJettonBalance();

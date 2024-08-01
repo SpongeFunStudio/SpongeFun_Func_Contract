@@ -67,6 +67,11 @@ global cell jetton_wallet_code;
         throw_unless(error::msg_value_not_enough, buy_amount > 0);
 
         int jetton_amount = buy_amount * RATE;
+        throw_unless(
+            error::exceed_max_claim_amount, 
+            jetton_amount <= MAX_SUPPLY * MAX_PERCENTAGE_EACH_CLAIM / DENOMINATOR
+        );
+        
         if(jetton_amount > MAX_SUPPLY * PUBLIC_SALE_PERCENTAGE / DENOMINATOR - total_sale){
             jetton_amount = MAX_SUPPLY * PUBLIC_SALE_PERCENTAGE / DENOMINATOR - total_sale;
         }

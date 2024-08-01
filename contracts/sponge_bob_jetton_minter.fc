@@ -193,15 +193,6 @@ global cell metadata_uri;
         return ();
     }
 
-    if (op == op::upgrade) {
-        throw_unless(error::not_owner, equal_slices_bits(sender_address, admin_address));
-        (cell new_data, cell new_code) = (in_msg_body~load_ref(), in_msg_body~load_ref());
-        in_msg_body.end_parse();
-        set_data(new_data);
-        set_code(new_code);
-        return ();
-    }
-
     if (op == op::top_up) {
         return (); ;; just accept tons
     }

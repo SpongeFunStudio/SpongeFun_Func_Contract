@@ -800,15 +800,13 @@ builder store_prefix_only_body(builder b) inline {
 ;; MSG BODY
 
 const int DENOMINATOR = 10000;
+const int MAX_PERCENTAGE_EACH_CLAIM = 1000;
 const int AIRDRP_PERCENTAGE = 3500;
 const int PUBLIC_SALE_PERCENTAGE = 3500;
 const int TEAM_PERCENTAGE = 1000;
 const int TREASURY_PERCENTAGE = 2000;
 const int MAX_SUPPLY = 1000000000000000000;
-const int RATE = 100000;
-
-const slice AIRDROP_CONTRACT_ADDRESS = "";
-const slice PUBLIC_SALE_CONTRACT_ADDRESS = "";
+const int RATE = 100000000;
 
 ;; According to the guideline, it is recommended to start the body of the internal message with uint32 op and uint64 query_id
 

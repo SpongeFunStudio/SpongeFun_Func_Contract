@@ -191,6 +191,61 @@ describe('SpongeBobJettonAirdrop', () => {
         });
     });
 
+    it('should failed to claim token of claimed amout more than 10% of max supply', async () => {
+        const claimAmount = toNano("300000000");
+        const res = await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+            user.getSender(),
+            0,
+            claimAmount,
+            kp.secretKey
+        );
+        expect(res.transactions).toHaveTransaction({
+            on: spongeBobAirdropContract.address,
+            aborted: true,
+            exitCode: Errors.exceed_max_claim_amount,
+        });
+    });
+
+    it('should failed to claim token if claim out', async () => {
+        const claimAmount = toNano("100000000");
+        await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+            user.getSender(),
+            0,
+            claimAmount,
+            kp.secretKey
+        );
+        await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+            user.getSender(),
+            1,
+            claimAmount,
+            kp.secretKey
+        );
+        await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+            user.getSender(),
+            2,
+            claimAmount,
+            kp.secretKey
+        );
+        const claimAmount1 = toNano("50000000");
+        await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+            user.getSender(),
+            3,
+            claimAmount1,
+            kp.secretKey
+        );
+        let res = await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+            user.getSender(),
+            4,
+            claimAmount1,
+            kp.secretKey
+        );
+        expect(res.transactions).toHaveTransaction({
+            on: spongeBobAirdropContract.address,
+            aborted: true,
+            exitCode: Errors.claim_out,
+        });
+    });
+
     it('should failed to mint_to_public_sale_contract before 1/2 airdrop token be claimed', async () => {
         const res2 = await spongeBobAirdropContract.sendMintToPublicSaleContractMessage(
             deployer.getSender(),
@@ -218,25 +273,28 @@ describe('SpongeBobJettonAirdrop', () => {
     });
 
     it('should success to mint_to_public_sale_contract after 1/2 airdrop token be claimed', async () => {
-        const claimAmount = toNano("300000000");
+        const claimAmount = toNano("100000000");
         const userJettonWallet = await userWallet(user.address);
         const res0 = await spongeBobAirdropContract.getAirdropStatus();
         expect(res0.total_claimed).toEqual(0n);
-        const res = await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
-            user.getSender(),
-            0,
-            claimAmount,
-            kp.secretKey
-        );
-        expect(res.transactions).toHaveTransaction({
-            on: spongeBobAirdropContract.address,
-            success: true,
-        });
 
-        const curBalance = await userJettonWallet.getJettonBalance();
-        expect(curBalance).toEqual(claimAmount);
-        const res1 = await spongeBobAirdropContract.getAirdropStatus();
-        expect(res1.total_claimed).toEqual(res0.total_claimed + claimAmount);
+        for (let i = 0; i < 2; i++) {
+            const res = await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+                user.getSender(),
+                i,
+                claimAmount,
+                kp.secretKey
+            );
+            expect(res.transactions).toHaveTransaction({
+                on: spongeBobAirdropContract.address,
+                success: true,
+            });
+
+            const curBalance = await userJettonWallet.getJettonBalance();
+            expect(curBalance).toEqual(claimAmount * BigInt(i+1));
+            const res1 = await spongeBobAirdropContract.getAirdropStatus();
+            expect(res1.total_claimed).toEqual(BigInt(i+1) * claimAmount);
+        }
 
         const res2 = await spongeBobAirdropContract.sendMintToPublicSaleContractMessage(
             deployer.getSender(),

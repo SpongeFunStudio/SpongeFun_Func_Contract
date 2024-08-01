@@ -40,6 +40,8 @@ export abstract class Errors {
     static can_not_start_public_sale = 76;
     static invalid_signature = 78;
     static repeat_signature = 79;
+    static claim_out = 80;
+    static exceed_max_claim_amount = 81;
 
     static sale_not_start = 95;
     static not_sold_out = 96;
