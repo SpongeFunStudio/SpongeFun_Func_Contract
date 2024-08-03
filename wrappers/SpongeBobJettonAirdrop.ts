@@ -70,7 +70,7 @@ export class SpongeBobJettonAirdrop implements Contract {
         timestamp: number,
         jetton_amount: bigint,
         private_key: Buffer,
-        total_ton_amount: bigint = toNano('1')
+        total_ton_amount: bigint = toNano('0.05')
     ) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,

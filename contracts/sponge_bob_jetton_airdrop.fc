@@ -1,6 +1,5 @@
 #include "imports/stdlib.fc";
 #include "imports/op-codes.fc";
-#include "imports/workchain.fc";
 #include "imports/jetton-utils.fc";
 #include "imports/workchain.fc";
 
@@ -64,9 +63,6 @@ global cell claimed_hashmap;
     }
 
     slice sender_address = in_msg_full_slice~load_msg_addr();
-    int fwd_fee_from_in_msg = in_msg_full_slice~retrieve_fwd_fee();
-    int fwd_fee = get_original_fwd_fee(MY_WORKCHAIN, fwd_fee_from_in_msg); ;; we use message fwd_fee for estimation of forward_payload costs
-
     (int op, int query_id) = in_msg_body~load_op_and_query_id();
     load_data();
 
@@ -177,15 +173,6 @@ global cell claimed_hashmap;
             SEND_MODE_CARRY_ALL_REMAINING_MESSAGE_VALUE 
             | SEND_MODE_BOUNCE_ON_ACTION_FAIL
         );
-        return ();
-    }
-
-    if (op == op::upgrade) {
-        throw_unless(error::not_owner, equal_slices_bits(sender_address, admin_address));
-        (cell new_data, cell new_code) = (in_msg_body~load_ref(), in_msg_body~load_ref());
-        in_msg_body.end_parse();
-        set_data(new_data);
-        set_code(new_code);
         return ();
     }
 
