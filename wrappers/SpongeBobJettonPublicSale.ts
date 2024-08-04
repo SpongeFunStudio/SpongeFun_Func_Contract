@@ -66,6 +66,16 @@ export class SpongeBobJettonPublicSale implements Contract {
         });
     }
 
+    async sendMintToLpMessage(provider: ContractProvider, via: Sender, value: bigint, lp: Address) {
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell().storeUint(Op.mint_to_lp, 32).storeUint(0, 64)
+                .storeAddress(lp)
+                .endCell(),
+        });
+    }
+
     async sendStartSaleTokenMessage(provider: ContractProvider, via: Sender, value: bigint) {
         await provider.internal(via, {
             value,

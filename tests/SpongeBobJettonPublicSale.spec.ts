@@ -227,7 +227,7 @@ describe('SpongeBobJettonPublicSale', () => {
             success: true
         });
         const treasuryBalance = await treasuryWallet.getJettonBalance();
-        expect(treasuryBalance).toEqual(toNano("200000000"));
+        expect(treasuryBalance).toEqual(toNano("120000000"));
 
         let team: SandboxContract<TreasuryContract> = await blockchain.treasury('team');
         let teamWallet = await userWallet(team.address);
@@ -243,6 +243,21 @@ describe('SpongeBobJettonPublicSale', () => {
         });
         const teamBalance = await teamWallet.getJettonBalance();
         expect(teamBalance).toEqual(toNano("100000000"));
+
+        let lp: SandboxContract<TreasuryContract> = await blockchain.treasury('lp');
+        let lpWallet = await userWallet(lp.address);
+        const res3 = await spongeBobJettonPublicSale.sendMintToLpMessage(
+            deployer.getSender(),
+            toNano('0.05'),
+            lp.address
+        );
+        expect(res3.transactions).toHaveTransaction({
+            from: deployer.address,
+            on: spongeBobJettonPublicSale.address,
+            success: true
+        });
+        const lpBalance = await lpWallet.getJettonBalance();
+        expect(lpBalance).toEqual(toNano("80000000"));
     });
 
     it('can not send mintToTreasury message before sold out', async () => {

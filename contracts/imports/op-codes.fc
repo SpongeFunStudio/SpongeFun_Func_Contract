@@ -52,6 +52,7 @@ const error::not_sold_out = 96;
 const op::mint_to_treasury = 0xe802c6b3;
 const op::mint_to_team = 0xb6b42cea;
 const op::open_sale = 0x5cbf8120;
+const op::mint_to_lp = 0x8677b19a;
 
 ;; vesting lock-up contract
 const op::vesting_unlock_token = 0xecaf4100;

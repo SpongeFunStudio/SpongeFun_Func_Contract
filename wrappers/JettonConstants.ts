@@ -19,6 +19,7 @@ export abstract class Op {
     static open_sale = 0x5cbf8120
     static mint_to_treasury = 0xe802c6b3;
     static mint_to_team = 0xb6b42cea;
+    static mint_to_lp = 0x8677b19a;
 
     // SpongeAirdrop Contract
     static claim_airdrop = 0xdcee4012
