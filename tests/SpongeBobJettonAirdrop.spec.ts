@@ -307,7 +307,7 @@ describe('SpongeBobJettonAirdrop', () => {
         });
         const publicSaleContractWallet = await userWallet(public_sale_contract.address);
         const publicSaleContractBalance = await publicSaleContractWallet.getJettonBalance();
-        expect(publicSaleContractBalance).toEqual(toNano(650000000));
+        expect(publicSaleContractBalance).toEqual(toNano(700000000));
     });
 
     it('minter admin can change admin', async () => {

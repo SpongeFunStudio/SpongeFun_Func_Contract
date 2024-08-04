@@ -118,7 +118,7 @@ describe('SpongeBobJettonPublicSale', () => {
         );
         const publicSaleContractWallet = await userWallet(spongeBobJettonPublicSale.address);
         const publicSaleContractBalance = await publicSaleContractWallet.getJettonBalance();
-        expect(publicSaleContractBalance).toEqual(toNano(650000000));
+        expect(publicSaleContractBalance).toEqual(toNano(700000000));
     });
 
     it('should deploy', async () => {
@@ -203,16 +203,16 @@ describe('SpongeBobJettonPublicSale', () => {
         );
         await spongeBobJettonPublicSale.sendBuyTokenMessage(
             user2.getSender(),
-            toNano('0.6')
+            toNano('1.1')
         );
         const afterBalance = await user2JettonWallet.getJettonBalance();
-        expect(afterBalance).toEqual(toNano("3.5") * BigInt(100000000));
+        expect(afterBalance).toEqual(toNano("4") * BigInt(100000000));
 
         const publicSaleContractWallet = await userWallet(spongeBobJettonPublicSale.address);
         const publicSaleContractBalance = await publicSaleContractWallet.getJettonBalance();
         expect(publicSaleContractBalance).toEqual(toNano("300000000"));
 
-        expect(await spongeBobJettonPublicSale.getTotalSale()).toEqual(toNano("350000000"));
+        expect(await spongeBobJettonPublicSale.getTotalSale()).toEqual(toNano("400000000"));
 
         let treasury: SandboxContract<TreasuryContract> = await blockchain.treasury('treasury');
         let treasuryWallet = await userWallet(treasury.address);

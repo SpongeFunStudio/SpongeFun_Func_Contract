@@ -23,6 +23,8 @@ export abstract class Op {
     // SpongeAirdrop Contract
     static claim_airdrop = 0xdcee4012
     static mint_to_public_sale_contract = 0x889da273;
+
+    static vesting_unlock_token = 0xecaf4100;
 }
 
 export abstract class Errors {

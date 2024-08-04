@@ -115,5 +115,9 @@ global cell jetton_wallet_code; ;; code of the wallet contract
         return ();
     }
 
+    if (op == op::top_up) {
+        return (); ;; just accept tons
+    }
+
     throw(error::wrong_op);
 }
