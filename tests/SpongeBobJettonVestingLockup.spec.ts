@@ -8,6 +8,7 @@ import { SpongeBobJettonWallet } from '../wrappers/SpongeBobJettonWallet';
 import { SpongeBobJettonAirdrop } from '../wrappers/SpongeBobJettonAirdrop';
 import { jettonContentToCell, SpongeBobJettonMinter } from '../wrappers/SpongeBobJettonMinter';
 import { SpongeBobJettonPublicSale } from '../wrappers/SpongeBobJettonPublicSale';
+import { Errors } from '../wrappers/JettonConstants';
 
 
 let blockchain: Blockchain;
@@ -34,6 +35,7 @@ describe('SpongeBobJettonVestingLockup', () => {
     let spongeBobPublicSaleCode: Cell;
     let spongeBobJettonVestingLockupCode: Cell;
     let kp: KeyPair;
+    let now: number;
 
     beforeAll(async () => {
         spongeBobMinterCode = await compile('SpongeBobJettonMinter');
@@ -81,16 +83,16 @@ describe('SpongeBobJettonVestingLockup', () => {
                 },
             spongeBobPublicSaleCode
             ));
-        
+        now = (parseInt((new Date().getTime() / 1000).toFixed(0)));
         spongeBobJettonVestingLockup = blockchain.openContract(
             SpongeBobJettonVestingLockup.createFromConfig({
                     sponge_bob_minter_address: spongeBobJettonMinter.address,
                     admin_address: deployer.address,
-                    start_time: parseInt((new Date().getTime() / 1000).toFixed(0)),
+                    total_lock_amount: toNano('200000000'),
+                    start_time: BigInt(now),
                     total_duration: 1000,
-                    unlock_period: 10,
-                    cliff_duration: 100,
-                    total_lock_amount: 1000,
+                    unlock_period: 100,
+                    cliff_duration: 100, 
                     jetton_wallet_code: jwallet_code,
                 },
                 spongeBobJettonVestingLockupCode
@@ -150,11 +152,103 @@ describe('SpongeBobJettonVestingLockup', () => {
         let treasuryWallet = await userWallet(spongeBobJettonVestingLockup.address);
         const treasuryBalance = await treasuryWallet.getJettonBalance();
         expect(treasuryBalance).toEqual(toNano("200000000"));
-
     });
 
     it('should deploy', async () => {
         // the check is done inside beforeEach
         // blockchain and spongeBobJettonVestingLockup are ready to use
+    });
+
+    it('should failed if not admin address', async () => {
+        const res = await spongeBobJettonVestingLockup.sendVestingLockupMessage(
+            notDeployer.getSender(),
+            toNano('0.05')
+        )
+        expect(res.transactions).toHaveTransaction({
+            from: notDeployer.address,
+            on: spongeBobJettonVestingLockup.address,
+            aborted: true,
+            exitCode: Errors.not_owner, // error::unauthorized_change_admin_request
+        });
+    });
+
+    it('should claim 0 amount if not reach one cliff_diration', async () => {
+        expect(await spongeBobJettonVestingLockup.getAlreadyUnlockAmount()).toEqual(toNano("0"));
+        expect(await spongeBobJettonVestingLockup.getTotalLockAmount()).toEqual(toNano("200000000"));
+
+        blockchain.now = now + 99;
+        const res = await spongeBobJettonVestingLockup.sendVestingLockupMessage(
+            deployer.getSender(),
+            toNano('0.05')
+        )
+        expect(res.transactions).toHaveTransaction({
+            from: deployer.address,
+            on: spongeBobJettonVestingLockup.address,
+            aborted: true,
+            exitCode: Errors.already_unlock_all,
+        });
+    });
+
+    it('should claim 0 amount if not reach one cliff_diration', async () => {
+        expect(await spongeBobJettonVestingLockup.getAlreadyUnlockAmount()).toEqual(toNano("0"));
+        expect(await spongeBobJettonVestingLockup.getTotalLockAmount()).toEqual(toNano("200000000"));
+
+        blockchain.now = now + 199;
+        const res = await spongeBobJettonVestingLockup.sendVestingLockupMessage(
+            deployer.getSender(),
+            toNano('0.05')
+        )
+        expect(res.transactions).toHaveTransaction({
+            from: deployer.address,
+            on: spongeBobJettonVestingLockup.address,
+            aborted: true,
+            exitCode: Errors.already_unlock_all,
+        });
+    });
+
+    it('should claim 1/10 amount if reach one period after cliff_diration', async () => {
+        expect(await spongeBobJettonVestingLockup.getAlreadyUnlockAmount()).toEqual(toNano("0"));
+        expect(await spongeBobJettonVestingLockup.getTotalLockAmount()).toEqual(toNano("200000000"));
+        let deployerWallet = await userWallet(deployer.address);
+
+        blockchain.now = now + 250;
+        const res = await spongeBobJettonVestingLockup.sendVestingLockupMessage(
+            deployer.getSender(),
+            toNano('0.05')
+        )
+        expect(res.transactions).toHaveTransaction({
+            from: deployer.address,
+            on: spongeBobJettonVestingLockup.address,
+            success: true,
+        });
+        const deployerBalance = await deployerWallet.getJettonBalance();
+        expect(deployerBalance).toEqual(toNano("20000000"));
+        expect(await spongeBobJettonVestingLockup.getAlreadyUnlockAmount()).toEqual(toNano("20000000"));
+
+        let treasuryWallet = await userWallet(spongeBobJettonVestingLockup.address);
+        const treasuryBalance = await treasuryWallet.getJettonBalance();
+        expect(treasuryBalance).toEqual(toNano("180000000"));
+
+        blockchain.now = now + 650;
+        await spongeBobJettonVestingLockup.sendVestingLockupMessage(
+            deployer.getSender(),
+            toNano('0.05')
+        )
+        const deployerBalance1 = await deployerWallet.getJettonBalance();
+        expect(deployerBalance1).toEqual(toNano("100000000"));
+        expect(await spongeBobJettonVestingLockup.getAlreadyUnlockAmount()).toEqual(toNano("100000000"));
+        const treasuryBalance1 = await treasuryWallet.getJettonBalance();
+        expect(treasuryBalance1).toEqual(toNano("100000000"));
+
+        blockchain.now = now + 1150;
+        await spongeBobJettonVestingLockup.sendVestingLockupMessage(
+            deployer.getSender(),
+            toNano('0.05')
+        )
+        const deployerBalance2 = await deployerWallet.getJettonBalance();
+        expect(deployerBalance2).toEqual(toNano("200000000"));
+        expect(await spongeBobJettonVestingLockup.getAlreadyUnlockAmount()).toEqual(toNano("200000000"));
+        const treasuryBalance2 = await treasuryWallet.getJettonBalance();
+        expect(treasuryBalance2).toEqual(toNano("0"));
     });
 });

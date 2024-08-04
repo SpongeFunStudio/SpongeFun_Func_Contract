@@ -47,6 +47,8 @@ export abstract class Errors {
 
     static sale_not_start = 95;
     static not_sold_out = 96;
+
+    static already_unlock_all = 100;
 }
 
 
