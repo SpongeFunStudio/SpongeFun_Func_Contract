@@ -798,7 +798,7 @@ builder store_prefix_only_body(builder b) inline {
 }
 
 ;; MSG BODY
-
+const int MIN_TON_FOR_STORAGE = 1000000000;
 const int DENOMINATOR = 10000;
 const int MAX_PERCENTAGE_EACH_CLAIM = 1000;
 const int AIRDRP_PERCENTAGE = 3000;

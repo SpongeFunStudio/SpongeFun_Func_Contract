@@ -20,6 +20,7 @@ export abstract class Op {
     static mint_to_treasury = 0xe802c6b3;
     static mint_to_team = 0xb6b42cea;
     static mint_to_lp = 0x8677b19a;
+    static withdraw = 0xb5de5f9e;
 
     // SpongeAirdrop Contract
     static claim_airdrop = 0xdcee4012
@@ -50,6 +51,7 @@ export abstract class Errors {
     static not_sold_out = 96;
 
     static already_unlock_all = 100;
+    static balance_not_enough = 101;
 }
 
 

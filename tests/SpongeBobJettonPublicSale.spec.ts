@@ -1,5 +1,5 @@
 import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
-import { Address, Cell, toNano } from '@ton/core';
+import { Address, Cell, fromNano, toNano } from '@ton/core';
 import { SpongeBobJettonPublicSale } from '../wrappers/SpongeBobJettonPublicSale';
 import '@ton/test-utils';
 import { compile } from '@ton/blueprint';
@@ -272,6 +272,98 @@ describe('SpongeBobJettonPublicSale', () => {
             aborted: true,
             exitCode: Errors.not_sold_out,
         });
+    });
+
+    it('can not withdraw before sold out', async () => {
+        const res = await spongeBobJettonPublicSale.sendWithdrawMessage(
+            deployer.getSender(),
+            toNano('0.05'),
+            toNano('1')
+        );
+        expect(res.transactions).toHaveTransaction({
+            from: deployer.address,
+            on: spongeBobJettonPublicSale.address,
+            aborted: true,
+            exitCode: Errors.not_sold_out,
+        });
+    });
+
+    it('can not withdraw if not owner', async () => {
+        const res = await spongeBobJettonPublicSale.sendWithdrawMessage(
+            notDeployer.getSender(),
+            toNano('0.05'),
+            toNano('1')
+        );
+        expect(res.transactions).toHaveTransaction({
+            from: notDeployer.address,
+            on: spongeBobJettonPublicSale.address,
+            aborted: true,
+            exitCode: Errors.not_owner,
+        });
+    });
+
+    it('can not withdraw if value less than min_ton_for_storage', async () => {
+        await spongeBobJettonPublicSale.sendStartSaleTokenMessage(
+            deployer.getSender(),
+            toNano('0.05')
+        );
+        await spongeBobJettonPublicSale.sendBuyTokenMessage(
+            user2.getSender(),
+            toNano('1.1')
+        );
+        await spongeBobJettonPublicSale.sendBuyTokenMessage(
+            user2.getSender(),
+            toNano('1.1')
+        );
+        await spongeBobJettonPublicSale.sendBuyTokenMessage(
+            user2.getSender(),
+            toNano('1.1')
+        );
+        await spongeBobJettonPublicSale.sendBuyTokenMessage(
+            user2.getSender(),
+            toNano('1.1')
+        );
+
+        const res = await spongeBobJettonPublicSale.sendWithdrawMessage(deployer.getSender(), toNano('0.01'), toNano('10'));
+        expect(res.transactions).toHaveTransaction({
+            from: deployer.address,
+            on: spongeBobJettonPublicSale.address,
+            aborted: true,
+            exitCode: Errors.balance_not_enough,
+        });
+    });
+
+    it('can withdraw if use correct params', async () => {
+        await spongeBobJettonPublicSale.sendStartSaleTokenMessage(
+            deployer.getSender(),
+            toNano('0.05')
+        );
+        await spongeBobJettonPublicSale.sendBuyTokenMessage(
+            user2.getSender(),
+            toNano('1.1')
+        );
+        await spongeBobJettonPublicSale.sendBuyTokenMessage(
+            user2.getSender(),
+            toNano('1.1')
+        );
+        await spongeBobJettonPublicSale.sendBuyTokenMessage(
+            user2.getSender(),
+            toNano('1.1')
+        );
+        await spongeBobJettonPublicSale.sendBuyTokenMessage(
+            user2.getSender(),
+            toNano('1.1')
+        );
+
+        const beforeBalance = await deployer.getBalance();
+        const res = await spongeBobJettonPublicSale.sendWithdrawMessage(deployer.getSender(), toNano('0.01'), toNano('3'));
+        expect(res.transactions).toHaveTransaction({
+            from: deployer.address,
+            on: spongeBobJettonPublicSale.address,
+            success: true,
+        });
+        const afterBalance = await deployer.getBalance();
+        expect(afterBalance).toBeLessThan(beforeBalance + toNano('3'));
     });
 
     it('admin can change admin', async () => {

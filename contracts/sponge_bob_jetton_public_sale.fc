@@ -264,6 +264,31 @@ global cell jetton_wallet_code;
         return ();
     }
 
+    if(op == op::withdraw) {
+
+        throw_unless(error::not_owner, equal_slices_bits(sender_address, admin_address));
+        ;;can release team and treasury token to linea invest contract after public sale sold out
+        throw_unless(
+            error::not_sold_out, 
+            total_sale == MAX_SUPPLY * PUBLIC_SALE_PERCENTAGE / DENOMINATOR
+        );
+
+        int withdraw_amount = in_msg_body~load_coins();
+        throw_unless(error::balance_not_enough, my_balance >=  withdraw_amount); ;; Make sure the smc has enough balance
+        int send_amount = min(withdraw_amount, my_balance - MIN_TON_FOR_STORAGE);
+        throw_unless(error::not_have_enough_amount, send_amount > 0);
+
+        cell msg = begin_cell()
+                .store_msg_flags_and_address_none(BOUNCEABLE)
+                .store_slice(sender_address) ;; withdraw to owner
+                .store_coins(send_amount)
+                .store_prefix_only_body()
+            .end_cell();
+
+        send_raw_message(msg, SEND_MODE_PAY_FEES_SEPARATELY);
+        return ();
+    }
+
     if (op == op::top_up) {
         return (); ;; just accept tons
     }

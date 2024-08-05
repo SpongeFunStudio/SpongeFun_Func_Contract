@@ -53,7 +53,9 @@ const op::mint_to_treasury = 0xe802c6b3;
 const op::mint_to_team = 0xb6b42cea;
 const op::open_sale = 0x5cbf8120;
 const op::mint_to_lp = 0x8677b19a;
+const op::withdraw = 0xb5de5f9e;
 
 ;; vesting lock-up contract
 const op::vesting_unlock_token = 0xecaf4100;
 const error::already_unlock_all = 100;
+const error::balance_not_enough = 101;
