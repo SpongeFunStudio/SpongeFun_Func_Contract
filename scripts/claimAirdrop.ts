@@ -12,7 +12,7 @@ async function getKp() {
 
 export async function run(provider: NetworkProvider) {
     const ui = provider.ui();
-    const jettonAirdropAddress = Address.parse('EQA1SlXAI8ZFKkBuKCIocdwy0MR76y8i66yCP9CGBhB7pIFb');
+    const jettonAirdropAddress = Address.parse('EQA-sgX9fp9ck8rKmgUETVVFWRJh6Ux6zqhvHGwMy4QysCgb');
 
     try {
         const spongeBobJettonAirdrop = provider.open(
