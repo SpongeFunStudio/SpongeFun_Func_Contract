@@ -53,10 +53,6 @@ export class SpongeBobJettonAirdrop implements Contract {
                 .storeCoins(claim_amount)
             .endCell();
         const sig = sign(msgToSign.hash(), private_key);
-        
-        // const claimAirdropMsg = beginCell()
-        //     .storeSlice(msgToSign.asSlice())
-        //     .endCell();
 
         return beginCell().storeUint(Op.claim_airdrop, 32).storeUint(0, 64) // op, queryId
             .storeBuffer(sig)

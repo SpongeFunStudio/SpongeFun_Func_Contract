@@ -59,3 +59,6 @@ const op::withdraw = 0xb5de5f9e;
 const op::vesting_unlock_token = 0xecaf4100;
 const error::already_unlock_all = 100;
 const error::balance_not_enough = 101;
+
+const op::place_ad = 0xc57f2811;
+const op::change_price = 0x96189f94;
