@@ -206,6 +206,6 @@ describe('SpongeBobJettonMinter', () => {
             success: true
         });
         const afterBalance = await spongeBobJettonMinter.getBalance();
-        expect(afterBalance).toBeLessThan(beforeBalance + toNano('1'));
+        expect(afterBalance).toBeLessThan(beforeBalance + toNano('0.05'));
     });
 });

@@ -93,7 +93,7 @@ export class SpongeBobJettonAirdrop implements Contract {
         provider: ContractProvider,
         via: Sender,
         public_sale_contract_address: Address,
-        total_ton_amount: bigint = toNano('1')
+        total_ton_amount: bigint = toNano('0.05')
     ) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
@@ -111,7 +111,7 @@ export class SpongeBobJettonAirdrop implements Contract {
             .endCell();
     }
 
-    async sendTopUp(provider: ContractProvider, via: Sender, value: bigint = toNano('1')) {
+    async sendTopUp(provider: ContractProvider, via: Sender, value: bigint = toNano('0.05')) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: SpongeBobJettonAirdrop.topUpMessage(),

@@ -73,7 +73,7 @@ export class SpongeBobJettonMinter implements Contract {
         from?: Address | null,
         response_addr?: Address | null,
         customPayload?: Cell | null,
-        forward_ton_amount: bigint = toNano('0'), total_ton_amount: bigint = toNano('1')
+        forward_ton_amount: bigint = toNano('0'), total_ton_amount: bigint = toNano('0.05')
     ) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
@@ -87,7 +87,7 @@ export class SpongeBobJettonMinter implements Contract {
             .endCell();
     }
 
-    async sendTopUp(provider: ContractProvider, via: Sender, value: bigint = toNano('1')) {
+    async sendTopUp(provider: ContractProvider, via: Sender, value: bigint = toNano('0.05')) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: SpongeBobJettonMinter.topUpMessage(),

@@ -349,6 +349,6 @@ describe('SpongeBobJettonAirdrop', () => {
             success: true
         });
         const afterBalance = await spongeBobAirdropContract.getBalance();
-        expect(afterBalance).toBeLessThan(beforeBalance + toNano('1'));
+        expect(afterBalance).toBeLessThan(beforeBalance + toNano('0.05'));
     });
 });

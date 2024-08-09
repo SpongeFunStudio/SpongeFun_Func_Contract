@@ -22,7 +22,7 @@ describe('SpongeBobAdvertising', () => {
         deployer = await blockchain.treasury('deployer');
 
         spongeBobAdvertising = blockchain.openContract(SpongeBobAdvertising.createFromConfig({
-            price_perday: toNano('1'),
+            price_perday: toNano('0.1'),
             admin_address: deployer.address
         }, code));
 

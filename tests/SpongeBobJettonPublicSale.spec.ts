@@ -278,7 +278,7 @@ describe('SpongeBobJettonPublicSale', () => {
         const res = await spongeBobJettonPublicSale.sendWithdrawMessage(
             deployer.getSender(),
             toNano('0.05'),
-            toNano('1')
+            toNano('2')
         );
         expect(res.transactions).toHaveTransaction({
             from: deployer.address,
@@ -292,7 +292,7 @@ describe('SpongeBobJettonPublicSale', () => {
         const res = await spongeBobJettonPublicSale.sendWithdrawMessage(
             notDeployer.getSender(),
             toNano('0.05'),
-            toNano('1')
+            toNano('2')
         );
         expect(res.transactions).toHaveTransaction({
             from: notDeployer.address,
