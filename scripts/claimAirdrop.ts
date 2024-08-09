@@ -12,14 +12,14 @@ async function getKp() {
 
 export async function run(provider: NetworkProvider) {
     const ui = provider.ui();
-    const jettonAirdropAddress = Address.parse('EQA-sgX9fp9ck8rKmgUETVVFWRJh6Ux6zqhvHGwMy4QysCgb');
+    const jettonAirdropAddress = Address.parse('EQA1SlXAI8ZFKkBuKCIocdwy0MR76y8i66yCP9CGBhB7pIFb');
 
     try {
         const spongeBobJettonAirdrop = provider.open(
             SpongeBobJettonAirdrop.createFromAddress(jettonAirdropAddress)
         );
 
-        const claimValue = toNano("10000");
+        const claimValue = toNano("100000000");
         await spongeBobJettonAirdrop.sendClaimAirdropTokenMessage(
             provider.sender(),
             parseInt((new Date().getTime() / 1000 ).toFixed(0)),
