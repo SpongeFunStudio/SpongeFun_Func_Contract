@@ -18,7 +18,6 @@ export async function run(provider: NetworkProvider) {
         const res = await spongeBobJettonAirdrop.getAirdropStatus();
         console.log(res);
 
-        const claimValue = toNano("100000000");
         await spongeBobJettonAirdrop.sendMintToPublicSaleContractMessage(
             provider.sender(),
             publicSaleContractAddress,
