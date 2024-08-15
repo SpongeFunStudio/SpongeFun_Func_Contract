@@ -1,10 +1,10 @@
 import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
 import { Address, Cell, toNano } from '@ton/core';
-import { SpongeBobJettonAirdrop } from '../wrappers/SpongeBobJettonAirdrop';
+import { SpongeFunJettonAirdrop } from '../wrappers/SpongeFunJettonAirdrop';
 import '@ton/test-utils';
 import { compile } from '@ton/blueprint';
-import { jettonContentToCell, SpongeBobJettonMinter } from '../wrappers/SpongeBobJettonMinter';
-import { SpongeBobJettonWallet } from '../wrappers/SpongeBobJettonWallet';
+import { jettonContentToCell, SpongeFunJettonMinter } from '../wrappers/SpongeFunJettonMinter';
+import { SpongeFunJettonWallet } from '../wrappers/SpongeFunJettonWallet';
 import { mnemonicNew, mnemonicToPrivateKey, KeyPair } from 'ton-crypto';
 import { Errors, Op } from '../wrappers/JettonConstants';
 
@@ -13,26 +13,26 @@ let deployer: SandboxContract<TreasuryContract>;
 let notDeployer: SandboxContract<TreasuryContract>;
 let user: SandboxContract<TreasuryContract>;
 let public_sale_contract: SandboxContract<TreasuryContract>;
-let spongeBobJettonMinter: SandboxContract<SpongeBobJettonMinter>;
-let spongeBobAirdropContract: SandboxContract<SpongeBobJettonAirdrop>;
-let spongeBobWalletContract: SandboxContract<SpongeBobJettonWallet>;
+let spongeFunJettonMinter: SandboxContract<SpongeFunJettonMinter>;
+let spongeFunAirdropContract: SandboxContract<SpongeFunJettonAirdrop>;
+let spongeFunWalletContract: SandboxContract<SpongeFunJettonWallet>;
 let jwallet_code: Cell;
 
-let userWallet: (address: Address) => Promise<SandboxContract<SpongeBobJettonWallet>>;
+let userWallet: (address: Address) => Promise<SandboxContract<SpongeFunJettonWallet>>;
 
 async function randomKp() {
     let mnemonics = await mnemonicNew();
     return mnemonicToPrivateKey(mnemonics);
 }
 
-describe('SpongeBobJettonAirdrop', () => {
-    let spongeBobMinterCode: Cell;
-    let spongeBobAirdropCode: Cell;
+describe('SpongeFunJettonAirdrop', () => {
+    let spongeFunMinterCode: Cell;
+    let spongeFunAirdropCode: Cell;
     let kp: KeyPair;
 
     beforeAll(async () => {
-        spongeBobMinterCode = await compile('SpongeBobJettonMinter');
-        spongeBobAirdropCode = await compile('SpongeBobJettonAirdrop');
+        spongeFunMinterCode = await compile('SpongeFunJettonMinter');
+        spongeFunAirdropCode = await compile('SpongeFunJettonAirdrop');
     });
 
     beforeEach(async () => {
@@ -44,39 +44,39 @@ describe('SpongeBobJettonAirdrop', () => {
         user = await blockchain.treasury('user');
         public_sale_contract = await blockchain.treasury('public_sale_contract');
 
-        jwallet_code = await compile('SpongeBobJettonWallet');
+        jwallet_code = await compile('SpongeFunJettonWallet');
 
-        spongeBobJettonMinter = blockchain.openContract(
-            SpongeBobJettonMinter.createFromConfig({
+        spongeFunJettonMinter = blockchain.openContract(
+            SpongeFunJettonMinter.createFromConfig({
                     mintable: true,
                     admin_address: deployer.address,
                     jetton_wallet_code: jwallet_code,
                     jetton_content: jettonContentToCell({uri: "https://ton.org/"})
                 },
-                spongeBobMinterCode
+                spongeFunMinterCode
             ));
         
-        spongeBobAirdropContract = blockchain.openContract(
-            SpongeBobJettonAirdrop.createFromConfig({
+        spongeFunAirdropContract = blockchain.openContract(
+            SpongeFunJettonAirdrop.createFromConfig({
                     public_key: kp.publicKey,
-                    sponge_bob_minter_address: spongeBobJettonMinter.address,
+                    sponge_fun_minter_address: spongeFunJettonMinter.address,
                     admin_address: deployer.address,
                     jetton_wallet_code: jwallet_code
                 },
-                spongeBobAirdropCode
+                spongeFunAirdropCode
             ));
 
         userWallet = async (address:Address) => blockchain.openContract(
-                          SpongeBobJettonWallet.createFromAddress(
-                            await spongeBobJettonMinter.getWalletAddress(address)
+                          SpongeFunJettonWallet.createFromAddress(
+                            await spongeFunJettonMinter.getWalletAddress(address)
                           )
                      );
 
-        const deployResult = await spongeBobJettonMinter.sendDeploy(deployer.getSender(), toNano('0.05'));
+        const deployResult = await spongeFunJettonMinter.sendDeploy(deployer.getSender(), toNano('0.05'));
 
         expect(deployResult.transactions).toHaveTransaction({
             from: deployer.address,
-            to: spongeBobJettonMinter.address,
+            to: spongeFunJettonMinter.address,
             deploy: true,
             success: true,
         });
@@ -84,26 +84,26 @@ describe('SpongeBobJettonAirdrop', () => {
         // Make sure it didn't bounce
         expect(deployResult.transactions).not.toHaveTransaction({
             on: deployer.address,
-            from: spongeBobJettonMinter.address,
+            from: spongeFunJettonMinter.address,
             inMessageBounced: true
         });
 
-        const deployResult1 = await spongeBobAirdropContract.sendDeploy(deployer.getSender(), toNano('0.05'));
+        const deployResult1 = await spongeFunAirdropContract.sendDeploy(deployer.getSender(), toNano('0.05'));
         expect(deployResult1.transactions).toHaveTransaction({
             from: deployer.address,
-            to: spongeBobAirdropContract.address,
+            to: spongeFunAirdropContract.address,
             deploy: true,
             success: true,
         });
 
         //mint dirdrop token to airdrop contract
         const allTokenAmount = toNano("1000000000");
-        let initialTotalSupply = await spongeBobJettonMinter.getTotalSupply();
+        let initialTotalSupply = await spongeFunJettonMinter.getTotalSupply();
 
-        const airdropWalletJettonWallet = await userWallet(spongeBobAirdropContract.address);
-        const res = await spongeBobJettonMinter.sendMintToClaimAirdropMessage(
+        const airdropWalletJettonWallet = await userWallet(spongeFunAirdropContract.address);
+        const res = await spongeFunJettonMinter.sendMintToClaimAirdropMessage(
             deployer.getSender(),
-            spongeBobAirdropContract.address,
+            spongeFunAirdropContract.address,
             allTokenAmount,
             null, null, null
         );
@@ -114,57 +114,57 @@ describe('SpongeBobJettonAirdrop', () => {
         });
         const curBalance = await airdropWalletJettonWallet.getJettonBalance();
         expect(curBalance).toEqual(allTokenAmount);
-        expect(await spongeBobJettonMinter.getTotalSupply()).toEqual(initialTotalSupply + allTokenAmount);
+        expect(await spongeFunJettonMinter.getTotalSupply()).toEqual(initialTotalSupply + allTokenAmount);
 
-        spongeBobWalletContract = blockchain.openContract(
-            SpongeBobJettonWallet.createFromAddress(airdropWalletJettonWallet.address)
+        spongeFunWalletContract = blockchain.openContract(
+            SpongeFunJettonWallet.createFromAddress(airdropWalletJettonWallet.address)
         );
-        const walletData = await spongeBobWalletContract.getWalletData();
-        expect(walletData.owner.equals(spongeBobAirdropContract.address));
+        const walletData = await spongeFunWalletContract.getWalletData();
+        expect(walletData.owner.equals(spongeFunAirdropContract.address));
     });
 
     it('should deploy', async () => {
         // the check is done inside beforeEach
-        // blockchain and spongeBobJettonAirdrop are ready to use
+        // blockchain and spongeFunJettonAirdrop are ready to use
     });
 
     it('should claim token successful if have right signature', async () => {
         const claimAmount = toNano("1000");
         const userJettonWallet = await userWallet(user.address);
-        const res0 = await spongeBobAirdropContract.getAirdropStatus();
+        const res0 = await spongeFunAirdropContract.getAirdropStatus();
         expect(res0.total_claimed).toEqual(0n);
 
-        const res = await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+        const res = await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
             user.getSender(),
             0,
             claimAmount,
             kp.secretKey
         );
         expect(res.transactions).toHaveTransaction({
-            on: spongeBobAirdropContract.address,
+            on: spongeFunAirdropContract.address,
             success: true,
         });
 
         const curBalance = await userJettonWallet.getJettonBalance();
         expect(curBalance).toEqual(claimAmount);
-        const res1 = await spongeBobAirdropContract.getAirdropStatus();
+        const res1 = await spongeFunAirdropContract.getAirdropStatus();
         expect(res1.total_claimed).toEqual(res0.total_claimed + claimAmount);
     });
 
     it('should failed to claim token if use error signature', async () => {
         const claimAmount = toNano("1000");
-        const res0 = await spongeBobAirdropContract.getAirdropStatus();
+        const res0 = await spongeFunAirdropContract.getAirdropStatus();
         expect(res0.total_claimed).toEqual(0n);
         let fakekp = await randomKp();
 
-        const res = await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+        const res = await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
             user.getSender(),
             100,
             claimAmount,
             fakekp.secretKey
         );
         expect(res.transactions).toHaveTransaction({
-            on: spongeBobAirdropContract.address,
+            on: spongeFunAirdropContract.address,
             aborted: true,
             exitCode: Errors.invalid_signature,
         });
@@ -172,20 +172,20 @@ describe('SpongeBobJettonAirdrop', () => {
 
     it('should failed to claim token if use signature twice', async () => {
         const claimAmount = toNano("1000");
-        await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+        await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
             user.getSender(),
             12378,
             claimAmount,
             kp.secretKey
         );
-        const res = await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+        const res = await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
             user.getSender(),
             12378,
             claimAmount,
             kp.secretKey
         );
         expect(res.transactions).toHaveTransaction({
-            on: spongeBobAirdropContract.address,
+            on: spongeFunAirdropContract.address,
             aborted: true,
             exitCode: Errors.repeat_signature,
         });
@@ -193,14 +193,14 @@ describe('SpongeBobJettonAirdrop', () => {
 
     it('should failed to claim token of claimed amout more than 10% of max supply', async () => {
         const claimAmount = toNano("300000000");
-        const res = await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+        const res = await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
             user.getSender(),
             0,
             claimAmount,
             kp.secretKey
         );
         expect(res.transactions).toHaveTransaction({
-            on: spongeBobAirdropContract.address,
+            on: spongeFunAirdropContract.address,
             aborted: true,
             exitCode: Errors.exceed_max_claim_amount,
         });
@@ -208,65 +208,65 @@ describe('SpongeBobJettonAirdrop', () => {
 
     it('should failed to claim token if claim out', async () => {
         const claimAmount = toNano("100000000");
-        await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+        await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
             user.getSender(),
             0,
             claimAmount,
             kp.secretKey
         );
-        await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+        await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
             user.getSender(),
             1,
             claimAmount,
             kp.secretKey
         );
-        await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+        await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
             user.getSender(),
             2,
             claimAmount,
             kp.secretKey
         );
         const claimAmount1 = toNano("50000000");
-        await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+        await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
             user.getSender(),
             3,
             claimAmount1,
             kp.secretKey
         );
-        let res = await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+        let res = await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
             user.getSender(),
             4,
             claimAmount1,
             kp.secretKey
         );
         expect(res.transactions).toHaveTransaction({
-            on: spongeBobAirdropContract.address,
+            on: spongeFunAirdropContract.address,
             aborted: true,
             exitCode: Errors.claim_out,
         });
     });
 
     it('should failed to mint_to_public_sale_contract before 1/2 airdrop token be claimed', async () => {
-        const res2 = await spongeBobAirdropContract.sendMintToPublicSaleContractMessage(
+        const res2 = await spongeFunAirdropContract.sendMintToPublicSaleContractMessage(
             deployer.getSender(),
             public_sale_contract.address
         );
         expect(res2.transactions).toHaveTransaction({
             from: deployer.address,
-            on: spongeBobAirdropContract.address,
+            on: spongeFunAirdropContract.address,
             aborted: true,
             exitCode: Errors.can_not_start_public_sale,
         });
     });
 
     it('Failed to mint_to_public_sale_contract if not admin', async () => {
-        const res2 = await spongeBobAirdropContract.sendMintToPublicSaleContractMessage(
+        const res2 = await spongeFunAirdropContract.sendMintToPublicSaleContractMessage(
             notDeployer.getSender(),
             public_sale_contract.address
         );
         expect(res2.transactions).toHaveTransaction({
             from: notDeployer.address,
-            on: spongeBobAirdropContract.address,
+            on: spongeFunAirdropContract.address,
             aborted: true,
             exitCode: Errors.not_owner,
         });
@@ -275,34 +275,34 @@ describe('SpongeBobJettonAirdrop', () => {
     it('should success to mint_to_public_sale_contract after 1/2 airdrop token be claimed', async () => {
         const claimAmount = toNano("100000000");
         const userJettonWallet = await userWallet(user.address);
-        const res0 = await spongeBobAirdropContract.getAirdropStatus();
+        const res0 = await spongeFunAirdropContract.getAirdropStatus();
         expect(res0.total_claimed).toEqual(0n);
 
         for (let i = 0; i < 2; i++) {
-            const res = await spongeBobAirdropContract.sendClaimAirdropTokenMessage(
+            const res = await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
                 user.getSender(),
                 i,
                 claimAmount,
                 kp.secretKey
             );
             expect(res.transactions).toHaveTransaction({
-                on: spongeBobAirdropContract.address,
+                on: spongeFunAirdropContract.address,
                 success: true,
             });
 
             const curBalance = await userJettonWallet.getJettonBalance();
             expect(curBalance).toEqual(claimAmount * BigInt(i+1));
-            const res1 = await spongeBobAirdropContract.getAirdropStatus();
+            const res1 = await spongeFunAirdropContract.getAirdropStatus();
             expect(res1.total_claimed).toEqual(BigInt(i+1) * claimAmount);
         }
 
-        const res2 = await spongeBobAirdropContract.sendMintToPublicSaleContractMessage(
+        const res2 = await spongeFunAirdropContract.sendMintToPublicSaleContractMessage(
             deployer.getSender(),
             public_sale_contract.address
         );
         expect(res2.transactions).toHaveTransaction({
             from: deployer.address,
-            on: spongeBobAirdropContract.address,
+            on: spongeFunAirdropContract.address,
             success: true,
         });
         const publicSaleContractWallet = await userWallet(public_sale_contract.address);
@@ -311,44 +311,44 @@ describe('SpongeBobJettonAirdrop', () => {
     });
 
     it('minter admin can change admin', async () => {
-        const adminBefore = await spongeBobAirdropContract.getAdminAddress();
+        const adminBefore = await spongeFunAirdropContract.getAdminAddress();
         expect(adminBefore).toEqualAddress(deployer.address);
-        let res = await spongeBobAirdropContract.sendChangeAdmin(deployer.getSender(), notDeployer.address);
+        let res = await spongeFunAirdropContract.sendChangeAdmin(deployer.getSender(), notDeployer.address);
         expect(res.transactions).toHaveTransaction({
             from: deployer.address,
-            on: spongeBobAirdropContract.address,
+            on: spongeFunAirdropContract.address,
             success: true
         });
 
-	    const adminAfter = await spongeBobAirdropContract.getAdminAddress();
+	    const adminAfter = await spongeFunAirdropContract.getAdminAddress();
         expect(adminAfter).toEqualAddress(notDeployer.address);
-        await spongeBobAirdropContract.sendChangeAdmin(notDeployer.getSender(), deployer.address);
-        expect((await spongeBobAirdropContract.getAdminAddress()).equals(deployer.address)).toBe(true);
+        await spongeFunAirdropContract.sendChangeAdmin(notDeployer.getSender(), deployer.address);
+        expect((await spongeFunAirdropContract.getAdminAddress()).equals(deployer.address)).toBe(true);
     });
 
     it('not a minter admin can not change admin', async () => {
-        const adminBefore = await spongeBobAirdropContract.getAdminAddress();
+        const adminBefore = await spongeFunAirdropContract.getAdminAddress();
         expect(adminBefore).toEqualAddress(deployer.address);
-        let changeAdmin = await spongeBobAirdropContract.sendChangeAdmin(notDeployer.getSender(), notDeployer.address);
-        expect((await spongeBobAirdropContract.getAdminAddress()).equals(deployer.address)).toBe(true);
+        let changeAdmin = await spongeFunAirdropContract.sendChangeAdmin(notDeployer.getSender(), notDeployer.address);
+        expect((await spongeFunAirdropContract.getAdminAddress()).equals(deployer.address)).toBe(true);
         expect(changeAdmin.transactions).toHaveTransaction({
             from: notDeployer.address,
-            on: spongeBobAirdropContract.address,
+            on: spongeFunAirdropContract.address,
             aborted: true,
             exitCode: Errors.not_owner, // error::unauthorized_change_admin_request
         });
     });
 
     it('anyone can top up', async () => {
-        const beforeBalance = await spongeBobAirdropContract.getBalance();
+        const beforeBalance = await spongeFunAirdropContract.getBalance();
 
-        let topUpTx = await spongeBobAirdropContract.sendTopUp(notDeployer.getSender());
+        let topUpTx = await spongeFunAirdropContract.sendTopUp(notDeployer.getSender());
         expect(topUpTx.transactions).toHaveTransaction({
             from: notDeployer.address,
-            on: spongeBobAirdropContract.address,
+            on: spongeFunAirdropContract.address,
             success: true
         });
-        const afterBalance = await spongeBobAirdropContract.getBalance();
+        const afterBalance = await spongeFunAirdropContract.getBalance();
         expect(afterBalance).toBeLessThan(beforeBalance + toNano('0.05'));
     });
 });

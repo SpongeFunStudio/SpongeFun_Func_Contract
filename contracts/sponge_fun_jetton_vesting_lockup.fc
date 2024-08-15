@@ -4,7 +4,7 @@
 #include "imports/jetton-utils.fc";
 #include "imports/workchain.fc";
 
-global slice sponge_bob_minter_address;
+global slice sponge_fun_minter_address;
 global slice admin_address;
 global int total_lock_amount;
 global int already_unlocked_amount;
@@ -19,7 +19,7 @@ global cell jetton_wallet_code;
 
     var ds = get_data().begin_parse();
 
-    sponge_bob_minter_address = ds~load_msg_addr();
+    sponge_fun_minter_address = ds~load_msg_addr();
     admin_address = ds~load_msg_addr();
     total_lock_amount = ds~load_coins();
     already_unlocked_amount = ds~load_coins();
@@ -36,7 +36,7 @@ global cell jetton_wallet_code;
 () save_data() impure {
     set_data(
         begin_cell()
-            .store_slice(sponge_bob_minter_address)
+            .store_slice(sponge_fun_minter_address)
             .store_slice(admin_address)
             .store_coins(total_lock_amount)
             .store_coins(already_unlocked_amount)
@@ -103,7 +103,7 @@ global cell jetton_wallet_code;
 
         slice vesting_lockup_wallet = calculate_user_jetton_wallet_address(
             my_address(), 
-            sponge_bob_minter_address, 
+            sponge_fun_minter_address, 
             jetton_wallet_code
         );
         cell msg = begin_cell()
@@ -138,5 +138,5 @@ int get_smc_balance() method_id {
 
 (slice, slice, int, int, int, int, int, int, cell) get_vesting_unlock_status() method_id {
     load_data();
-    return (sponge_bob_minter_address, admin_address, total_lock_amount, already_unlocked_amount, start_time, total_duration, unlock_period, cliff_diration, jetton_wallet_code);
+    return (sponge_fun_minter_address, admin_address, total_lock_amount, already_unlocked_amount, start_time, total_duration, unlock_period, cliff_diration, jetton_wallet_code);
 }

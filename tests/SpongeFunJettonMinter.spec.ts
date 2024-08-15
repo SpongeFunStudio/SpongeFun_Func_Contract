@@ -1,35 +1,35 @@
 import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
 import { Address, Cell, Dictionary, beginCell, storeStateInit, toNano } from '@ton/core';
-import { SpongeBobJettonMinter, jettonContentToCell } from '../wrappers/SpongeBobJettonMinter';
+import { SpongeFunJettonMinter, jettonContentToCell } from '../wrappers/SpongeFunJettonMinter';
 import '@ton/test-utils';
 import { compile } from '@ton/blueprint';
-import { SpongeBobJettonWallet } from '../wrappers/SpongeBobJettonWallet';
+import { SpongeFunJettonWallet } from '../wrappers/SpongeFunJettonWallet';
 import { Errors, Op } from '../wrappers/JettonConstants';
 import { mnemonicNew, sign, mnemonicToPrivateKey, KeyPair } from 'ton-crypto';
-import { SpongeBobJettonAirdrop } from '../wrappers/SpongeBobJettonAirdrop';
+import { SpongeFunJettonAirdrop } from '../wrappers/SpongeFunJettonAirdrop';
 
 let blockchain: Blockchain;
 let deployer: SandboxContract<TreasuryContract>;
 let notDeployer: SandboxContract<TreasuryContract>;
-let spongeBobJettonMinter: SandboxContract<SpongeBobJettonMinter>;
-let spongeBobAirdropContract: SandboxContract<SpongeBobJettonAirdrop>;
+let spongeFunJettonMinter: SandboxContract<SpongeFunJettonMinter>;
+let spongeFunAirdropContract: SandboxContract<SpongeFunJettonAirdrop>;
 let jwallet_code: Cell;
 
-let userWallet: (address: Address) => Promise<SandboxContract<SpongeBobJettonWallet>>;
+let userWallet: (address: Address) => Promise<SandboxContract<SpongeFunJettonWallet>>;
 
 async function randomKp() {
     let mnemonics = await mnemonicNew();
     return mnemonicToPrivateKey(mnemonics);
 }
 
-describe('SpongeBobJettonMinter', () => {
-    let spongeBobMinterCode: Cell;
-    let spongeBobAirdropCode: Cell;
+describe('SpongeFunJettonMinter', () => {
+    let spongeFunMinterCode: Cell;
+    let spongeFunAirdropCode: Cell;
     let kp: KeyPair;
 
     beforeAll(async () => {
-        spongeBobMinterCode = await compile('SpongeBobJettonMinter');
-        spongeBobAirdropCode = await compile('SpongeBobJettonAirdrop');
+        spongeFunMinterCode = await compile('SpongeFunJettonMinter');
+        spongeFunAirdropCode = await compile('SpongeFunJettonAirdrop');
     });
 
     beforeEach(async () => {
@@ -37,39 +37,39 @@ describe('SpongeBobJettonMinter', () => {
         kp = await randomKp();
         deployer = await blockchain.treasury('deployer');
         notDeployer  = await blockchain.treasury('notDeployer');
-        jwallet_code = await compile('SpongeBobJettonWallet');
+        jwallet_code = await compile('SpongeFunJettonWallet');
 
-        spongeBobJettonMinter = blockchain.openContract(
-            SpongeBobJettonMinter.createFromConfig({
+        spongeFunJettonMinter = blockchain.openContract(
+            SpongeFunJettonMinter.createFromConfig({
                     mintable: true,
                     admin_address: deployer.address,
                     jetton_wallet_code: jwallet_code,
                     jetton_content: jettonContentToCell({uri: "https://ton.org/"})
                 },
-                spongeBobMinterCode
+                spongeFunMinterCode
             ));
         
-        spongeBobAirdropContract = blockchain.openContract(
-            SpongeBobJettonAirdrop.createFromConfig({
+        spongeFunAirdropContract = blockchain.openContract(
+            SpongeFunJettonAirdrop.createFromConfig({
                     public_key: kp.publicKey,
-                    sponge_bob_minter_address: spongeBobJettonMinter.address,
+                    sponge_fun_minter_address: spongeFunJettonMinter.address,
                     admin_address: deployer.address,
                     jetton_wallet_code: jwallet_code
                 },
-                spongeBobAirdropCode
+                spongeFunAirdropCode
             ));
 
         userWallet = async (address:Address) => blockchain.openContract(
-                          SpongeBobJettonWallet.createFromAddress(
-                            await spongeBobJettonMinter.getWalletAddress(address)
+                          SpongeFunJettonWallet.createFromAddress(
+                            await spongeFunJettonMinter.getWalletAddress(address)
                           )
                      );
 
-        const deployResult = await spongeBobJettonMinter.sendDeploy(deployer.getSender(), toNano('0.05'));
+        const deployResult = await spongeFunJettonMinter.sendDeploy(deployer.getSender(), toNano('0.05'));
 
         expect(deployResult.transactions).toHaveTransaction({
             from: deployer.address,
-            to: spongeBobJettonMinter.address,
+            to: spongeFunJettonMinter.address,
             deploy: true,
             success: true,
         });
@@ -77,14 +77,14 @@ describe('SpongeBobJettonMinter', () => {
         // Make sure it didn't bounce
         expect(deployResult.transactions).not.toHaveTransaction({
             on: deployer.address,
-            from: spongeBobJettonMinter.address,
+            from: spongeFunJettonMinter.address,
             inMessageBounced: true
         });
 
-        const deployResult1 = await spongeBobAirdropContract.sendDeploy(deployer.getSender(), toNano('0.05'));
+        const deployResult1 = await spongeFunAirdropContract.sendDeploy(deployer.getSender(), toNano('0.05'));
         expect(deployResult1.transactions).toHaveTransaction({
             from: deployer.address,
-            to: spongeBobAirdropContract.address,
+            to: spongeFunAirdropContract.address,
             deploy: true,
             success: true,
         });
@@ -92,17 +92,17 @@ describe('SpongeBobJettonMinter', () => {
 
     it('should deploy', async () => {
         // the check is done inside beforeEach
-        // blockchain and spongeBobJettonMinter are ready to use
+        // blockchain and spongeFunJettonMinter are ready to use
     });
 
     it('should mint airdrop jetton to airdrop_wallet', async () => {
         const airdropValue = toNano("1000000000");
-        let initialTotalSupply = await spongeBobJettonMinter.getTotalSupply();
+        let initialTotalSupply = await spongeFunJettonMinter.getTotalSupply();
 
-        const airdropWalletJettonWallet = await userWallet(spongeBobAirdropContract.address);
-        const res = await spongeBobJettonMinter.sendMintToClaimAirdropMessage(
+        const airdropWalletJettonWallet = await userWallet(spongeFunAirdropContract.address);
+        const res = await spongeFunJettonMinter.sendMintToClaimAirdropMessage(
             deployer.getSender(),
-            spongeBobAirdropContract.address,
+            spongeFunAirdropContract.address,
             airdropValue,
             null, deployer.address, null
         );
@@ -113,7 +113,7 @@ describe('SpongeBobJettonMinter', () => {
         });
         const curBalance = await airdropWalletJettonWallet.getJettonBalance();
         expect(curBalance).toEqual(airdropValue);
-        expect(await spongeBobJettonMinter.getTotalSupply()).toEqual(initialTotalSupply + airdropValue);
+        expect(await spongeFunJettonMinter.getTotalSupply()).toEqual(initialTotalSupply + airdropValue);
 
         const smc   = await blockchain.getContract(airdropWalletJettonWallet.address);
         if(smc.accountState === undefined)
@@ -128,84 +128,84 @@ describe('SpongeBobJettonMinter', () => {
     // implementation detail
     it('not a minter admin should not be able to mint jettons', async () => {
         const airdropValue = toNano("350000000");
-        let initialTotalSupply = await spongeBobJettonMinter.getTotalSupply();
+        let initialTotalSupply = await spongeFunJettonMinter.getTotalSupply();
         expect(initialTotalSupply).toEqual(0n);
-        const unAuthMintResult = await spongeBobJettonMinter.sendMintToClaimAirdropMessage(
+        const unAuthMintResult = await spongeFunJettonMinter.sendMintToClaimAirdropMessage(
             notDeployer.getSender(),
-            spongeBobAirdropContract.address,
+            spongeFunAirdropContract.address,
             airdropValue,
             null, notDeployer.address, null
         );
         expect(unAuthMintResult.transactions).toHaveTransaction({
             from: notDeployer.address,
-            to: spongeBobJettonMinter.address,
+            to: spongeFunJettonMinter.address,
             aborted: true,
             exitCode: Errors.not_owner,
         });   
-        expect(await spongeBobJettonMinter.getTotalSupply()).toEqual(initialTotalSupply);
+        expect(await spongeFunJettonMinter.getTotalSupply()).toEqual(initialTotalSupply);
     });
 
     it('not a minter admin should not be able to mint jettons', async () => {
         const airdropValue = toNano("300000000");
-        let initialTotalSupply = await spongeBobJettonMinter.getTotalSupply();
+        let initialTotalSupply = await spongeFunJettonMinter.getTotalSupply();
         expect(initialTotalSupply).toEqual(0n);
 
-        const unAuthMintResult = await spongeBobJettonMinter.sendMintToClaimAirdropMessage(
+        const unAuthMintResult = await spongeFunJettonMinter.sendMintToClaimAirdropMessage(
             deployer.getSender(),
-            spongeBobAirdropContract.address,
+            spongeFunAirdropContract.address,
             airdropValue,
             null, deployer.address, null
         );
         expect(unAuthMintResult.transactions).toHaveTransaction({
             from: deployer.address,
-            to: spongeBobJettonMinter.address,
+            to: spongeFunJettonMinter.address,
             aborted: true,
             exitCode: Errors.invalid_airdrop_amount,
         });   
-        expect(await spongeBobJettonMinter.getTotalSupply()).toEqual(initialTotalSupply);
+        expect(await spongeFunJettonMinter.getTotalSupply()).toEqual(initialTotalSupply);
     });
 
     it('minter admin can change admin', async () => {
-        const adminBefore = await spongeBobJettonMinter.getAdminAddress();
+        const adminBefore = await spongeFunJettonMinter.getAdminAddress();
         expect(adminBefore).toEqualAddress(deployer.address);
-        let res = await spongeBobJettonMinter.sendChangeAdmin(deployer.getSender(), notDeployer.address);
+        let res = await spongeFunJettonMinter.sendChangeAdmin(deployer.getSender(), notDeployer.address);
         expect(res.transactions).toHaveTransaction({
             from: deployer.address,
-            on: spongeBobJettonMinter.address,
+            on: spongeFunJettonMinter.address,
             success: true
         });
 
-	    const adminAfter = await spongeBobJettonMinter.getAdminAddress();
+	    const adminAfter = await spongeFunJettonMinter.getAdminAddress();
         expect(adminAfter).toEqualAddress(notDeployer.address);
-        await spongeBobJettonMinter.sendChangeAdmin(notDeployer.getSender(), deployer.address);
-        expect((await spongeBobJettonMinter.getAdminAddress()).equals(deployer.address)).toBe(true);
+        await spongeFunJettonMinter.sendChangeAdmin(notDeployer.getSender(), deployer.address);
+        expect((await spongeFunJettonMinter.getAdminAddress()).equals(deployer.address)).toBe(true);
     });
 
     it('not a minter admin can not change admin', async () => {
-        const adminBefore = await spongeBobJettonMinter.getAdminAddress();
+        const adminBefore = await spongeFunJettonMinter.getAdminAddress();
         expect(adminBefore).toEqualAddress(deployer.address);
-        let changeAdmin = await spongeBobJettonMinter.sendChangeAdmin(notDeployer.getSender(), notDeployer.address);
-        expect((await spongeBobJettonMinter.getAdminAddress()).equals(deployer.address)).toBe(true);
+        let changeAdmin = await spongeFunJettonMinter.sendChangeAdmin(notDeployer.getSender(), notDeployer.address);
+        expect((await spongeFunJettonMinter.getAdminAddress()).equals(deployer.address)).toBe(true);
         expect(changeAdmin.transactions).toHaveTransaction({
             from: notDeployer.address,
-            on: spongeBobJettonMinter.address,
+            on: spongeFunJettonMinter.address,
             aborted: true,
             exitCode: Errors.not_owner, // error::unauthorized_change_admin_request
         });
     });
 
     it('anyone can top up', async () => {
-        const adminBefore = await spongeBobJettonMinter.getAdminAddress();
+        const adminBefore = await spongeFunJettonMinter.getAdminAddress();
         expect(adminBefore).toEqualAddress(deployer.address);
-        const beforeBalance = await spongeBobJettonMinter.getBalance();
+        const beforeBalance = await spongeFunJettonMinter.getBalance();
 
-        let topUpTx = await spongeBobJettonMinter.sendTopUp(notDeployer.getSender());
+        let topUpTx = await spongeFunJettonMinter.sendTopUp(notDeployer.getSender());
         expect(topUpTx.transactions).toHaveTransaction({
             from: notDeployer.address,
-            on: spongeBobJettonMinter.address,
+            on: spongeFunJettonMinter.address,
             success: true
         });
-        const afterBalance = await spongeBobJettonMinter.getBalance();
+        const afterBalance = await spongeFunJettonMinter.getBalance();
         expect(afterBalance).toBeLessThan(beforeBalance + toNano('0.05'));
     });
 });

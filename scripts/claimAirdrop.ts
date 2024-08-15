@@ -1,6 +1,6 @@
 import { NetworkProvider } from '@ton/blueprint';
 import { Address, toNano } from '@ton/core';
-import { SpongeBobJettonAirdrop } from '../wrappers/SpongeBobJettonAirdrop';
+import { SpongeFunJettonAirdrop } from '../wrappers/SpongeFunJettonAirdrop';
 import { mnemonicNew, mnemonicToPrivateKey, KeyPair } from 'ton-crypto';
 import * as dotenv from 'dotenv'
 dotenv.config()
@@ -15,12 +15,12 @@ export async function run(provider: NetworkProvider) {
     const jettonAirdropAddress = Address.parse('EQA1SlXAI8ZFKkBuKCIocdwy0MR76y8i66yCP9CGBhB7pIFb');
 
     try {
-        const spongeBobJettonAirdrop = provider.open(
-            SpongeBobJettonAirdrop.createFromAddress(jettonAirdropAddress)
+        const spongeFunJettonAirdrop = provider.open(
+            SpongeFunJettonAirdrop.createFromAddress(jettonAirdropAddress)
         );
 
         const claimValue = toNano("100000000");
-        await spongeBobJettonAirdrop.sendClaimAirdropTokenMessage(
+        await spongeFunJettonAirdrop.sendClaimAirdropTokenMessage(
             provider.sender(),
             parseInt((new Date().getTime() / 1000 ).toFixed(0)),
             claimValue,

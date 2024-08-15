@@ -1,8 +1,8 @@
 import { NetworkProvider } from '@ton/blueprint';
 import { Address, toNano } from '@ton/core';
-import { SpongeBobJettonAirdrop } from '../wrappers/SpongeBobJettonAirdrop';
+import { SpongeFunJettonAirdrop } from '../wrappers/SpongeFunJettonAirdrop';
 import * as dotenv from 'dotenv'
-import { SpongeBobJettonPublicSale } from '../wrappers/SpongeBobJettonPublicSale';
+import { SpongeFunJettonPublicSale } from '../wrappers/SpongeFunJettonPublicSale';
 dotenv.config()
 
 export async function run(provider: NetworkProvider) {
@@ -11,23 +11,23 @@ export async function run(provider: NetworkProvider) {
     const jettonAirdropAddress = Address.parse('EQA1SlXAI8ZFKkBuKCIocdwy0MR76y8i66yCP9CGBhB7pIFb');
 
     try {
-        const spongeBobJettonAirdrop = provider.open(
-            SpongeBobJettonAirdrop.createFromAddress(jettonAirdropAddress)
+        const spongeFunJettonAirdrop = provider.open(
+            SpongeFunJettonAirdrop.createFromAddress(jettonAirdropAddress)
         );
 
-        const res = await spongeBobJettonAirdrop.getAirdropStatus();
+        const res = await spongeFunJettonAirdrop.getAirdropStatus();
         console.log(res);
 
-        await spongeBobJettonAirdrop.sendMintToPublicSaleContractMessage(
+        await spongeFunJettonAirdrop.sendMintToPublicSaleContractMessage(
             provider.sender(),
             publicSaleContractAddress,
         )
         ui.write('Send token to public_sale contract');
 
-        const spongeBobJettonPublicSale = provider.open(
-            SpongeBobJettonPublicSale.createFromAddress(publicSaleContractAddress)
+        const spongeFunJettonPublicSale = provider.open(
+            SpongeFunJettonPublicSale.createFromAddress(publicSaleContractAddress)
         );
-        await spongeBobJettonPublicSale.sendStartSaleTokenMessage(provider.sender(),toNano("0.05"));
+        await spongeFunJettonPublicSale.sendStartSaleTokenMessage(provider.sender(),toNano("0.05"));
         ui.write('Open sale');
 
     } catch (e: any) {

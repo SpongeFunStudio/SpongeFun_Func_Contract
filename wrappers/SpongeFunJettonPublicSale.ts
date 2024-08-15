@@ -1,33 +1,33 @@
 import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode, toNano } from '@ton/core';
 import { Op } from './JettonConstants';
 
-export type SpongeBobJettonPublicSaleConfig = {
-    sponge_bob_minter_address: Address;
+export type SpongeFunJettonPublicSaleConfig = {
+    sponge_fun_minter_address: Address;
     admin_address: Address;
     jetton_wallet_code: Cell;
 };
 
-export function spongeBobJettonPublicSaleConfigToCell(config: SpongeBobJettonPublicSaleConfig): Cell {
+export function spongeFunJettonPublicSaleConfigToCell(config: SpongeFunJettonPublicSaleConfig): Cell {
     return beginCell()
             .storeCoins(0)
             .storeBit(false)
-            .storeAddress(config.sponge_bob_minter_address)
+            .storeAddress(config.sponge_fun_minter_address)
             .storeAddress(config.admin_address)
             .storeRef(config.jetton_wallet_code)
             .endCell();
 }
 
-export class SpongeBobJettonPublicSale implements Contract {
+export class SpongeFunJettonPublicSale implements Contract {
     constructor(readonly address: Address, readonly init?: { code: Cell; data: Cell }) {}
 
     static createFromAddress(address: Address) {
-        return new SpongeBobJettonPublicSale(address);
+        return new SpongeFunJettonPublicSale(address);
     }
 
-    static createFromConfig(config: SpongeBobJettonPublicSaleConfig, code: Cell, workchain = 0) {
-        const data = spongeBobJettonPublicSaleConfigToCell(config);
+    static createFromConfig(config: SpongeFunJettonPublicSaleConfig, code: Cell, workchain = 0) {
+        const data = spongeFunJettonPublicSaleConfigToCell(config);
         const init = { code, data };
-        return new SpongeBobJettonPublicSale(contractAddress(workchain, init), init);
+        return new SpongeFunJettonPublicSale(contractAddress(workchain, init), init);
     }
 
     async sendDeploy(provider: ContractProvider, via: Sender, value: bigint) {
@@ -103,7 +103,7 @@ export class SpongeBobJettonPublicSale implements Contract {
     async sendChangeAdmin(provider: ContractProvider, via: Sender, newOwner: Address) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: SpongeBobJettonPublicSale.changeAdminMessage(newOwner),
+            body: SpongeFunJettonPublicSale.changeAdminMessage(newOwner),
             value: toNano("0.1"),
         });
     }
@@ -113,13 +113,13 @@ export class SpongeBobJettonPublicSale implements Contract {
 
         let total_sale = res.stack.readBigNumber();
         let start_sale = res.stack.readBoolean();
-        let sponge_bob_minter_address = res.stack.readAddress();
+        let sponge_fun_minter_address = res.stack.readAddress();
         let admin_address = res.stack.readAddress();
         let walletCode = res.stack.readCell();
         return {
             total_sale,
             start_sale,
-            sponge_bob_minter_address,
+            sponge_fun_minter_address,
             admin_address,
             walletCode,
         };

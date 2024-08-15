@@ -2,36 +2,36 @@ import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, 
 import { Op } from './JettonConstants';
 import { sign } from 'ton-crypto';
 
-export type SpongeBobJettonAirdropConfig = {
+export type SpongeFunJettonAirdropConfig = {
     public_key: Buffer;
-    sponge_bob_minter_address: Address;
+    sponge_fun_minter_address: Address;
     admin_address: Address;
     jetton_wallet_code: Cell;
     claimed_hashmap?: Cell;
 };
 
-export function spongeBobJettonAirdropConfigToCell(config: SpongeBobJettonAirdropConfig): Cell {
+export function spongeFunJettonAirdropConfigToCell(config: SpongeFunJettonAirdropConfig): Cell {
     return beginCell()
             .storeCoins(0)
             .storeBuffer(config.public_key)
-            .storeAddress(config.sponge_bob_minter_address)
+            .storeAddress(config.sponge_fun_minter_address)
             .storeAddress(config.admin_address)
             .storeRef(config.jetton_wallet_code)
             .storeMaybeRef(config.claimed_hashmap)
             .endCell();
 }
 
-export class SpongeBobJettonAirdrop implements Contract {
+export class SpongeFunJettonAirdrop implements Contract {
     constructor(readonly address: Address, readonly init?: { code: Cell; data: Cell }) {}
 
     static createFromAddress(address: Address) {
-        return new SpongeBobJettonAirdrop(address);
+        return new SpongeFunJettonAirdrop(address);
     }
 
-    static createFromConfig(config: SpongeBobJettonAirdropConfig, code: Cell, workchain = 0) {
-        const data = spongeBobJettonAirdropConfigToCell(config);
+    static createFromConfig(config: SpongeFunJettonAirdropConfig, code: Cell, workchain = 0) {
+        const data = spongeFunJettonAirdropConfigToCell(config);
         const init = { code, data };
-        return new SpongeBobJettonAirdrop(contractAddress(workchain, init), init);
+        return new SpongeFunJettonAirdrop(contractAddress(workchain, init), init);
     }
 
     async sendDeploy(provider: ContractProvider, via: Sender, value: bigint) {
@@ -70,7 +70,7 @@ export class SpongeBobJettonAirdrop implements Contract {
     ) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: SpongeBobJettonAirdrop.claimAirdropTokenMessage(timestamp, jetton_amount, private_key),
+            body: SpongeFunJettonAirdrop.claimAirdropTokenMessage(timestamp, jetton_amount, private_key),
             value: total_ton_amount,
         });
     }
@@ -84,7 +84,7 @@ export class SpongeBobJettonAirdrop implements Contract {
     async sendChangeAdmin(provider: ContractProvider, via: Sender, newOwner: Address) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: SpongeBobJettonAirdrop.changeAdminMessage(newOwner),
+            body: SpongeFunJettonAirdrop.changeAdminMessage(newOwner),
             value: toNano("0.1"),
         });
     }
@@ -114,7 +114,7 @@ export class SpongeBobJettonAirdrop implements Contract {
     async sendTopUp(provider: ContractProvider, via: Sender, value: bigint = toNano('0.05')) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: SpongeBobJettonAirdrop.topUpMessage(),
+            body: SpongeFunJettonAirdrop.topUpMessage(),
             value: value,
         });
     }
@@ -124,13 +124,13 @@ export class SpongeBobJettonAirdrop implements Contract {
 
         let total_claimed = res.stack.readBigNumber();
         let public_key = res.stack.readBigNumber();
-        let sponge_bob_minter_address = res.stack.readAddress();
+        let sponge_fun_minter_address = res.stack.readAddress();
         let admin_address = res.stack.readAddress();
         let walletCode = res.stack.readCell();
         return {
             total_claimed,
             public_key,
-            sponge_bob_minter_address,
+            sponge_fun_minter_address,
             admin_address,
             walletCode,
         };

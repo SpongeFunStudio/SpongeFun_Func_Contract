@@ -5,14 +5,14 @@ export type JettonMinterContent = {
     uri: string
 };
 
-export type SpongeBobJettonMinterConfig = {
+export type SpongeFunJettonMinterConfig = {
     mintable: boolean;
     admin_address: Address;
     jetton_wallet_code: Cell;
     jetton_content: Cell | JettonMinterContent;
 };
 
-export function spongeBobJettonMinterConfigToCell(config: SpongeBobJettonMinterConfig): Cell {
+export function spongeFunJettonMinterConfigToCell(config: SpongeFunJettonMinterConfig): Cell {
     const content = config.jetton_content instanceof Cell ? config.jetton_content : jettonContentToCell(config.jetton_content);
     return beginCell()
             .storeCoins(0)
@@ -29,17 +29,17 @@ export function jettonContentToCell(content: JettonMinterContent) {
         .endCell();
 }
 
-export class SpongeBobJettonMinter implements Contract {
+export class SpongeFunJettonMinter implements Contract {
     constructor(readonly address: Address, readonly init?: { code: Cell; data: Cell }) {}
 
     static createFromAddress(address: Address) {
-        return new SpongeBobJettonMinter(address);
+        return new SpongeFunJettonMinter(address);
     }
 
-    static createFromConfig(config: SpongeBobJettonMinterConfig, code: Cell, workchain = 0) {
-        const data = spongeBobJettonMinterConfigToCell(config);
+    static createFromConfig(config: SpongeFunJettonMinterConfig, code: Cell, workchain = 0) {
+        const data = spongeFunJettonMinterConfigToCell(config);
         const init = { code, data };
-        return new SpongeBobJettonMinter(contractAddress(workchain, init), init);
+        return new SpongeFunJettonMinter(contractAddress(workchain, init), init);
     }
 
     async sendDeploy(provider: ContractProvider, via: Sender, value: bigint) {
@@ -77,7 +77,7 @@ export class SpongeBobJettonMinter implements Contract {
     ) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: SpongeBobJettonMinter.mintToAirdropContractMessage(to, jetton_amount, from, response_addr, customPayload, forward_ton_amount),
+            body: SpongeFunJettonMinter.mintToAirdropContractMessage(to, jetton_amount, from, response_addr, customPayload, forward_ton_amount),
             value: total_ton_amount,
         });
     }
@@ -90,7 +90,7 @@ export class SpongeBobJettonMinter implements Contract {
     async sendTopUp(provider: ContractProvider, via: Sender, value: bigint = toNano('0.05')) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: SpongeBobJettonMinter.topUpMessage(),
+            body: SpongeFunJettonMinter.topUpMessage(),
             value: value,
         });
     }
@@ -104,7 +104,7 @@ export class SpongeBobJettonMinter implements Contract {
     async sendChangeAdmin(provider: ContractProvider, via: Sender, newOwner: Address) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: SpongeBobJettonMinter.changeAdminMessage(newOwner),
+            body: SpongeFunJettonMinter.changeAdminMessage(newOwner),
             value: toNano("0.1"),
         });
     }
@@ -119,7 +119,7 @@ export class SpongeBobJettonMinter implements Contract {
     async sendChangeContent(provider: ContractProvider, via: Sender, content: Cell | JettonMinterContent) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: SpongeBobJettonMinter.changeContentMessage(content),
+            body: SpongeFunJettonMinter.changeContentMessage(content),
             value: toNano("0.1"),
         });
     }
@@ -134,7 +134,7 @@ export class SpongeBobJettonMinter implements Contract {
     async sendUpgrade(provider: ContractProvider, via: Sender, new_code: Cell, new_data: Cell, value: bigint = toNano('0.1'), query_id: bigint | number = 0) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: SpongeBobJettonMinter.upgradeMessage(new_code, new_data, query_id),
+            body: SpongeFunJettonMinter.upgradeMessage(new_code, new_data, query_id),
             value
         });
     }

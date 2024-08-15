@@ -1,34 +1,39 @@
 import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from '@ton/core';
-import { jettonContentToCell } from './SpongeBobJettonMinter';
 import { Op } from './JettonConstants';
 
-export type SpongeBobAdvertisingConfig = {
+export type SpongeFunAdvertisingConfig = {
     price_perday: bigint;
+    sponge_price_perday: bigint;
     admin_address: Address;
+    sponge_fun_minter_address: Address;
+    jetton_wallet_code: Cell;
     ad_cell?: Cell;
 };
 
-export function spongeBobAdvertisingConfigToCell(config: SpongeBobAdvertisingConfig): Cell {
+export function spongeFunAdvertisingConfigToCell(config: SpongeFunAdvertisingConfig): Cell {
 
     return beginCell()
         .storeCoins(config.price_perday)
+        .storeCoins(config.sponge_price_perday)
         .storeUint(0, 64)
         .storeAddress(config.admin_address)
+        .storeAddress(config.sponge_fun_minter_address)
+        .storeRef(config.jetton_wallet_code)
         .storeMaybeRef(config.ad_cell)
         .endCell();
 }
 
-export class SpongeBobAdvertising implements Contract {
+export class SpongeFunAdvertising implements Contract {
     constructor(readonly address: Address, readonly init?: { code: Cell; data: Cell }) {}
 
     static createFromAddress(address: Address) {
-        return new SpongeBobAdvertising(address);
+        return new SpongeFunAdvertising(address);
     }
 
-    static createFromConfig(config: SpongeBobAdvertisingConfig, code: Cell, workchain = 0) {
-        const data = spongeBobAdvertisingConfigToCell(config);
+    static createFromConfig(config: SpongeFunAdvertisingConfig, code: Cell, workchain = 0) {
+        const data = spongeFunAdvertisingConfigToCell(config);
         const init = { code, data };
-        return new SpongeBobAdvertising(contractAddress(workchain, init), init);
+        return new SpongeFunAdvertising(contractAddress(workchain, init), init);
     }
 
     async sendDeploy(provider: ContractProvider, via: Sender, value: bigint) {

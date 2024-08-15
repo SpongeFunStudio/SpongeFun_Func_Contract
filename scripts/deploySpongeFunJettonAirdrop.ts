@@ -1,8 +1,8 @@
 import { toNano } from '@ton/core';
-import { SpongeBobJettonAirdrop } from '../wrappers/SpongeBobJettonAirdrop';
+import { SpongeFunJettonAirdrop } from '../wrappers/SpongeFunJettonAirdrop';
 import { compile, NetworkProvider } from '@ton/blueprint';
 import { mnemonicNew, mnemonicToPrivateKey, KeyPair } from 'ton-crypto';
-import { jettonContentToCell, SpongeBobJettonMinter } from '../wrappers/SpongeBobJettonMinter';
+import { jettonContentToCell, SpongeFunJettonMinter } from '../wrappers/SpongeFunJettonMinter';
 import { promptUserFriendlyAddress } from '../wrappers/ui-utils';
 import * as dotenv from 'dotenv'
 dotenv.config()
@@ -16,31 +16,31 @@ export async function run(provider: NetworkProvider) {
     const isTestnet = provider.network() !== 'mainnet';
     const ui = provider.ui();
 
-    const jwallet_code = await compile('SpongeBobJettonWallet');
+    const jwallet_code = await compile('SpongeFunJettonWallet');
     let kp: KeyPair = await getKp();
 
     const adminAddress = await promptUserFriendlyAddress("Enter the address of the jetton owner (admin):", ui, isTestnet);
 
-    const spongeBobJettonMinter = provider.open(
-            SpongeBobJettonMinter.createFromConfig({
+    const spongeFunJettonMinter = provider.open(
+            SpongeFunJettonMinter.createFromConfig({
                     mintable: true,
                     admin_address: adminAddress.address,
                     jetton_wallet_code: jwallet_code,
-                    jetton_content: jettonContentToCell({uri: "https://ygytkyoysropdzezabwz.supabase.co/storage/v1/object/public/mini-app-public/SpongeBobCoin.json"})
+                    jetton_content: jettonContentToCell({uri: "https://ygytkyoysropdzezabwz.supabase.co/storage/v1/object/public/mini-app-public/SpongeFunCoin.json"})
                 },
-                await compile('SpongeBobJettonMinter')
+                await compile('SpongeFunJettonMinter')
         ));
     
-    const spongeBobJettonAirdrop = provider.open(SpongeBobJettonAirdrop.createFromConfig({
+    const spongeFunJettonAirdrop = provider.open(SpongeFunJettonAirdrop.createFromConfig({
         public_key: kp.publicKey,
-        sponge_bob_minter_address: spongeBobJettonMinter.address,
+        sponge_fun_minter_address: spongeFunJettonMinter.address,
         admin_address: adminAddress.address,
         jetton_wallet_code: jwallet_code
-    }, await compile('SpongeBobJettonAirdrop')));
+    }, await compile('SpongeFunJettonAirdrop')));
 
-    await spongeBobJettonAirdrop.sendDeploy(provider.sender(), toNano('0.05'));
+    await spongeFunJettonAirdrop.sendDeploy(provider.sender(), toNano('0.05'));
 
-    await provider.waitForDeploy(spongeBobJettonAirdrop.address);
+    await provider.waitForDeploy(spongeFunJettonAirdrop.address);
 
-    // run methods on `spongeBobJettonAirdrop`
+    // run methods on `spongeFunJettonAirdrop`
 }

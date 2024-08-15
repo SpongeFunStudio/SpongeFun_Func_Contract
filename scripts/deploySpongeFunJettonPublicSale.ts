@@ -1,31 +1,31 @@
 import { toNano } from '@ton/core';
-import { SpongeBobJettonPublicSale } from '../wrappers/SpongeBobJettonPublicSale';
+import { SpongeFunJettonPublicSale } from '../wrappers/SpongeFunJettonPublicSale';
 import { compile, NetworkProvider } from '@ton/blueprint';
 import { promptUserFriendlyAddress } from '../wrappers/ui-utils';
-import { jettonContentToCell, SpongeBobJettonMinter } from '../wrappers/SpongeBobJettonMinter';
+import { jettonContentToCell, SpongeFunJettonMinter } from '../wrappers/SpongeFunJettonMinter';
 
 export async function run(provider: NetworkProvider) {
     const isTestnet = provider.network() !== 'mainnet';
     const ui = provider.ui();
-    const jwallet_code = await compile('SpongeBobJettonWallet');
+    const jwallet_code = await compile('SpongeFunJettonWallet');
     const adminAddress = await promptUserFriendlyAddress("Enter the address of the jetton owner (admin):", ui, isTestnet);
 
-    const spongeBobJettonMinter = provider.open(
-            SpongeBobJettonMinter.createFromConfig({
+    const spongeFunJettonMinter = provider.open(
+            SpongeFunJettonMinter.createFromConfig({
                     mintable: true,
                     admin_address: adminAddress.address,
                     jetton_wallet_code: jwallet_code,
                     jetton_content: jettonContentToCell({uri: "https://jettonowner.com/jetton.json"})
                 },
-                await compile('SpongeBobJettonMinter')
+                await compile('SpongeFunJettonMinter')
         ));
-    const spongeBobJettonPublicSale = provider.open(SpongeBobJettonPublicSale.createFromConfig({
-        sponge_bob_minter_address: spongeBobJettonMinter.address,
+    const spongeFunJettonPublicSale = provider.open(SpongeFunJettonPublicSale.createFromConfig({
+        sponge_fun_minter_address: spongeFunJettonMinter.address,
         admin_address: adminAddress.address,
         jetton_wallet_code: jwallet_code
-    }, await compile('SpongeBobJettonPublicSale')));
+    }, await compile('SpongeFunJettonPublicSale')));
 
-    await spongeBobJettonPublicSale.sendDeploy(provider.sender(), toNano('0.05'));
+    await spongeFunJettonPublicSale.sendDeploy(provider.sender(), toNano('0.05'));
 
-    await provider.waitForDeploy(spongeBobJettonPublicSale.address);
+    await provider.waitForDeploy(spongeFunJettonPublicSale.address);
 }

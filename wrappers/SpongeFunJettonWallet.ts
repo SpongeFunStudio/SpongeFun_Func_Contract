@@ -1,13 +1,13 @@
 import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from '@ton/core';
 import { Op } from './JettonConstants';
 
-export type SpongeBobJettonWalletConfig = {
+export type SpongeFunJettonWalletConfig = {
     ownerAddress: Address,
     jettonMasterAddress: Address,
     jetton_wallet_code: Cell,
 };
 
-export function spongeBobJettonWalletConfigToCell(config: SpongeBobJettonWalletConfig): Cell {
+export function spongeFunJettonWalletConfigToCell(config: SpongeFunJettonWalletConfig): Cell {
     return beginCell()
         .storeCoins(0) // jetton balance
         .storeAddress(config.ownerAddress)
@@ -16,17 +16,17 @@ export function spongeBobJettonWalletConfigToCell(config: SpongeBobJettonWalletC
         .endCell();
 }
 
-export class SpongeBobJettonWallet implements Contract {
+export class SpongeFunJettonWallet implements Contract {
     constructor(readonly address: Address, readonly init?: { code: Cell; data: Cell }) {}
 
     static createFromAddress(address: Address) {
-        return new SpongeBobJettonWallet(address);
+        return new SpongeFunJettonWallet(address);
     }
 
-    static createFromConfig(config: SpongeBobJettonWalletConfig, code: Cell, workchain = 0) {
-        const data = spongeBobJettonWalletConfigToCell(config);
+    static createFromConfig(config: SpongeFunJettonWalletConfig, code: Cell, workchain = 0) {
+        const data = spongeFunJettonWalletConfigToCell(config);
         const init = { code, data };
-        return new SpongeBobJettonWallet(contractAddress(workchain, init), init);
+        return new SpongeFunJettonWallet(contractAddress(workchain, init), init);
     }
 
     async sendDeploy(provider: ContractProvider, via: Sender, value: bigint) {
@@ -82,7 +82,7 @@ export class SpongeBobJettonWallet implements Contract {
     ) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: SpongeBobJettonWallet.transferMessage(
+            body: SpongeFunJettonWallet.transferMessage(
                 jetton_amount,
                 to,
                 responseAddress,
@@ -119,7 +119,7 @@ export class SpongeBobJettonWallet implements Contract {
                           customPayload: Cell | null) {
         await provider.internal(via, {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: SpongeBobJettonWallet.burnMessage(
+            body: SpongeFunJettonWallet.burnMessage(
                 jetton_amount,
                 responseAddress,
                 customPayload

@@ -6,7 +6,7 @@
 
 global int total_sale;
 global int start_sale;
-global slice sponge_bob_minter_address;
+global slice sponge_fun_minter_address;
 global slice admin_address;
 global cell jetton_wallet_code;
 
@@ -17,7 +17,7 @@ global cell jetton_wallet_code;
 
     total_sale = ds~load_coins();
     start_sale = ds~load_bool();
-    sponge_bob_minter_address = ds~load_msg_addr();
+    sponge_fun_minter_address = ds~load_msg_addr();
     admin_address = ds~load_msg_addr();
     jetton_wallet_code = ds~load_ref();
     ds.end_parse();
@@ -29,7 +29,7 @@ global cell jetton_wallet_code;
         begin_cell()
             .store_coins(total_sale)
             .store_bool(start_sale)
-            .store_slice(sponge_bob_minter_address)
+            .store_slice(sponge_fun_minter_address)
             .store_slice(admin_address)
             .store_ref(jetton_wallet_code)
             .end_cell()
@@ -95,7 +95,7 @@ global cell jetton_wallet_code;
 
         slice public_sale_wallet = calculate_user_jetton_wallet_address(
             my_address(), 
-            sponge_bob_minter_address, 
+            sponge_fun_minter_address, 
             jetton_wallet_code
         );
 
@@ -141,7 +141,7 @@ global cell jetton_wallet_code;
 
         slice public_sale_wallet = calculate_user_jetton_wallet_address(
             my_address(), 
-            sponge_bob_minter_address, 
+            sponge_fun_minter_address, 
             jetton_wallet_code
         );
 
@@ -185,7 +185,7 @@ global cell jetton_wallet_code;
 
         slice public_sale_wallet = calculate_user_jetton_wallet_address(
             my_address(), 
-            sponge_bob_minter_address, 
+            sponge_fun_minter_address, 
             jetton_wallet_code
         );
 
@@ -229,7 +229,7 @@ global cell jetton_wallet_code;
 
         slice public_sale_wallet = calculate_user_jetton_wallet_address(
             my_address(), 
-            sponge_bob_minter_address, 
+            sponge_fun_minter_address, 
             jetton_wallet_code
         );
 
@@ -303,5 +303,5 @@ int get_smc_balance() method_id {
 
 (int, int, slice, slice, cell) get_publi_sale_status() method_id {
     load_data();
-    return (total_sale, start_sale, sponge_bob_minter_address, admin_address, jetton_wallet_code);
+    return (total_sale, start_sale, sponge_fun_minter_address, admin_address, jetton_wallet_code);
 }
