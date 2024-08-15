@@ -89,6 +89,18 @@ export class SpongeFunJettonAirdrop implements Contract {
         });
     }
 
+    async sendWithdraw(provider: ContractProvider, via: Sender, withdraw_amount: bigint) {
+        await provider.internal(via, {
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell()
+                    .storeUint(Op.withdraw, 32)
+                    .storeUint(0, 64)
+                    .storeCoins(withdraw_amount)
+                    .endCell(),
+            value: toNano("0.05"),
+        });
+    }
+
     async sendMintToPublicSaleContractMessage(
         provider: ContractProvider,
         via: Sender,

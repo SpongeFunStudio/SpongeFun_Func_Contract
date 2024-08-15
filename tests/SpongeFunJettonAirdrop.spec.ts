@@ -351,4 +351,47 @@ describe('SpongeFunJettonAirdrop', () => {
         const afterBalance = await spongeFunAirdropContract.getBalance();
         expect(afterBalance).toBeLessThan(beforeBalance + toNano('0.05'));
     });
+
+    it('can not withdraw if not admin', async () => {
+        const beforeBalance = await spongeFunAirdropContract.getBalance();
+
+        let topUpTx = await spongeFunAirdropContract.sendTopUp(notDeployer.getSender(), toNano('10'));
+        expect(topUpTx.transactions).toHaveTransaction({
+            from: notDeployer.address,
+            on: spongeFunAirdropContract.address,
+            success: true
+        });
+        const afterBalance = await spongeFunAirdropContract.getBalance();
+        expect(afterBalance).toBeLessThan(beforeBalance + toNano('10'));
+        let withdrawTx = await spongeFunAirdropContract.sendWithdraw(notDeployer.getSender(), toNano('10'));
+        expect(withdrawTx.transactions).toHaveTransaction({
+            from: notDeployer.address,
+            on: spongeFunAirdropContract.address,
+            aborted: true,
+            exitCode: Errors.not_owner, // error::unauthorized_change_admin_request
+        });
+    });
+
+    it('can withdraw success if admin', async () => {
+        const beforeBalance = await spongeFunAirdropContract.getBalance();
+
+        let topUpTx = await spongeFunAirdropContract.sendTopUp(notDeployer.getSender(), toNano('10'));
+        expect(topUpTx.transactions).toHaveTransaction({
+            from: notDeployer.address,
+            on: spongeFunAirdropContract.address,
+            success: true
+        });
+        const afterBalance = await spongeFunAirdropContract.getBalance();
+        expect(afterBalance).toBeLessThan(beforeBalance + toNano('10'));
+
+        const deployerBeforeBalance = await deployer.getBalance();
+        let withdrawTx = await spongeFunAirdropContract.sendWithdraw(deployer.getSender(), toNano('10'));
+        expect(withdrawTx.transactions).toHaveTransaction({
+            from: deployer.address,
+            on: spongeFunAirdropContract.address,
+            success: true,
+        });
+        const deployerAfterBalance = await deployer.getBalance();
+        expect(deployerAfterBalance).toBeGreaterThan(deployerBeforeBalance + toNano('9.8'));
+    });
 });
