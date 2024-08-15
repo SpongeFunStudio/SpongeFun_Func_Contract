@@ -46,16 +46,6 @@ export class SpongeFunJettonPublicSale implements Contract {
         });
     }
 
-    async sendMintToTreasuryMessage(provider: ContractProvider, via: Sender, value: bigint, treasury: Address) {
-        await provider.internal(via, {
-            value,
-            sendMode: SendMode.PAY_GAS_SEPARATELY,
-            body: beginCell().storeUint(Op.mint_to_treasury, 32).storeUint(0, 64)
-                .storeAddress(treasury)
-                .endCell(),
-        });
-    }
-
     async sendMintToTeamMessage(provider: ContractProvider, via: Sender, value: bigint, team: Address) {
         await provider.internal(via, {
             value,

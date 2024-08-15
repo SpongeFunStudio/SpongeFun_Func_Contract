@@ -6,7 +6,7 @@ import { compile } from '@ton/blueprint';
 import { jettonContentToCell, SpongeFunJettonMinter } from '../wrappers/SpongeFunJettonMinter';
 import { SpongeFunJettonWallet } from '../wrappers/SpongeFunJettonWallet';
 import { mnemonicNew, mnemonicToPrivateKey, KeyPair } from 'ton-crypto';
-import { Errors, Op } from '../wrappers/JettonConstants';
+import { AIRDRP_PERCENTAGE, DENOMINATOR, Errors, Op, TOTAL_SUPPLY } from '../wrappers/JettonConstants';
 
 let blockchain: Blockchain;
 let deployer: SandboxContract<TreasuryContract>;
@@ -97,14 +97,13 @@ describe('SpongeFunJettonAirdrop', () => {
         });
 
         //mint dirdrop token to airdrop contract
-        const allTokenAmount = toNano("1000000000");
         let initialTotalSupply = await spongeFunJettonMinter.getTotalSupply();
 
         const airdropWalletJettonWallet = await userWallet(spongeFunAirdropContract.address);
         const res = await spongeFunJettonMinter.sendMintToClaimAirdropMessage(
             deployer.getSender(),
             spongeFunAirdropContract.address,
-            allTokenAmount,
+            TOTAL_SUPPLY,
             null, null, null
         );
         expect(res.transactions).toHaveTransaction({
@@ -113,8 +112,8 @@ describe('SpongeFunJettonAirdrop', () => {
             success: true,
         });
         const curBalance = await airdropWalletJettonWallet.getJettonBalance();
-        expect(curBalance).toEqual(allTokenAmount);
-        expect(await spongeFunJettonMinter.getTotalSupply()).toEqual(initialTotalSupply + allTokenAmount);
+        expect(curBalance).toEqual(TOTAL_SUPPLY);
+        expect(await spongeFunJettonMinter.getTotalSupply()).toEqual(initialTotalSupply + TOTAL_SUPPLY);
 
         spongeFunWalletContract = blockchain.openContract(
             SpongeFunJettonWallet.createFromAddress(airdropWalletJettonWallet.address)
@@ -226,17 +225,22 @@ describe('SpongeFunJettonAirdrop', () => {
             claimAmount,
             kp.secretKey
         );
-        const claimAmount1 = toNano("50000000");
         await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
             user.getSender(),
             3,
-            claimAmount1,
+            claimAmount,
+            kp.secretKey
+        );
+        await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
+            user.getSender(),
+            4,
+            claimAmount,
             kp.secretKey
         );
         let res = await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
             user.getSender(),
-            4,
-            claimAmount1,
+            5,
+            claimAmount,
             kp.secretKey
         );
         expect(res.transactions).toHaveTransaction({
@@ -278,7 +282,7 @@ describe('SpongeFunJettonAirdrop', () => {
         const res0 = await spongeFunAirdropContract.getAirdropStatus();
         expect(res0.total_claimed).toEqual(0n);
 
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < 3; i++) {
             const res = await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
                 user.getSender(),
                 i,
@@ -307,7 +311,7 @@ describe('SpongeFunJettonAirdrop', () => {
         });
         const publicSaleContractWallet = await userWallet(public_sale_contract.address);
         const publicSaleContractBalance = await publicSaleContractWallet.getJettonBalance();
-        expect(publicSaleContractBalance).toEqual(toNano(700000000));
+        expect(publicSaleContractBalance).toEqual(TOTAL_SUPPLY - TOTAL_SUPPLY * BigInt(AIRDRP_PERCENTAGE) / BigInt(DENOMINATOR));
     });
 
     it('minter admin can change admin', async () => {

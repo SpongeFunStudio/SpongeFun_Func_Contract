@@ -801,11 +801,10 @@ builder store_prefix_only_body(builder b) inline {
 const int MIN_TON_FOR_STORAGE = 100000000; ;; 0.1 ton
 const int DENOMINATOR = 10000;
 const int MAX_PERCENTAGE_EACH_CLAIM = 1000;
-const int AIRDRP_PERCENTAGE = 3000;
-const int PUBLIC_SALE_PERCENTAGE = 4000;
-const int TEAM_PERCENTAGE = 1000;
+const int AIRDRP_PERCENTAGE = 5000;
+const int PUBLIC_SALE_PERCENTAGE = 3000;
+const int TEAM_PERCENTAGE = 1200;
 const int LP_PERCENTAGE = 800;
-const int TREASURY_PERCENTAGE = 1200;
 const int MAX_SUPPLY = 1000000000000000000;
 const int RATE = 100000000;
 

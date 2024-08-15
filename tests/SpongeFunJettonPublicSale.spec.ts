@@ -8,6 +8,7 @@ import { SpongeFunJettonAirdrop } from '../wrappers/SpongeFunJettonAirdrop';
 import { SpongeFunJettonWallet } from '../wrappers/SpongeFunJettonWallet';
 import { mnemonicNew, mnemonicToPrivateKey, KeyPair } from 'ton-crypto';
 import { Errors, Op } from '../wrappers/JettonConstants';
+import { AIRDRP_PERCENTAGE, DENOMINATOR, LP_PERCENTAGE, PUBLIC_SALE_PERCENTAGE, TEAM_PERCENTAGE, TOTAL_SUPPLY } from '../wrappers/JettonConstants';
 
 
 let blockchain: Blockchain;
@@ -86,11 +87,11 @@ describe('SpongeFunJettonPublicSale', () => {
                      );
         await spongeFunJettonMinter.sendDeploy(deployer.getSender(), toNano('0.05'));
         await spongeFunAirdropContract.sendDeploy(deployer.getSender(), toNano('0.05'));
-        const allTokenAmount = toNano("1000000000");
+        
         await spongeFunJettonMinter.sendMintToClaimAirdropMessage(
             deployer.getSender(),
             spongeFunAirdropContract.address,
-            allTokenAmount,
+            TOTAL_SUPPLY,
             null, null, null
         );
 
@@ -104,7 +105,7 @@ describe('SpongeFunJettonPublicSale', () => {
         });
 
         const claimAmount = toNano("100000000");
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < 3; i++) {
             await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
                 user.getSender(),
                 i,
@@ -118,7 +119,7 @@ describe('SpongeFunJettonPublicSale', () => {
         );
         const publicSaleContractWallet = await userWallet(spongeFunJettonPublicSale.address);
         const publicSaleContractBalance = await publicSaleContractWallet.getJettonBalance();
-        expect(publicSaleContractBalance).toEqual(toNano(700000000));
+        expect(publicSaleContractBalance).toEqual(TOTAL_SUPPLY - TOTAL_SUPPLY * BigInt(AIRDRP_PERCENTAGE) / BigInt(DENOMINATOR));
     });
 
     it('should deploy', async () => {
@@ -154,7 +155,7 @@ describe('SpongeFunJettonPublicSale', () => {
 
         const userJettonWallet = await userWallet(user.address);
         const beforeBalance = await userJettonWallet.getJettonBalance();
-        expect(beforeBalance).toEqual(toNano("200000000"));
+        expect(beforeBalance).toEqual(toNano("300000000"));
 
         const res1 = await spongeFunJettonPublicSale.sendBuyTokenMessage(
             user.getSender(),
@@ -169,8 +170,8 @@ describe('SpongeFunJettonPublicSale', () => {
         expect(afterBalance).toEqual(beforeBalance + toNano("1") * BigInt(100000000));
     });
 
-    it('not a admin can not send mintToTreasury message', async () => {
-        const res = await spongeFunJettonPublicSale.sendMintToTreasuryMessage(
+    it('not a admin can not send mintToTeam message', async () => {
+        const res = await spongeFunJettonPublicSale.sendMintToTeamMessage(
             notDeployer.getSender(),
             toNano('0.05'),
             user.address
@@ -183,7 +184,7 @@ describe('SpongeFunJettonPublicSale', () => {
         });
     });
 
-    it('can send mintToTreasury message after sold out', async () => {
+    it('can send mintToTeam message after sold out', async () => {
         await spongeFunJettonPublicSale.sendStartSaleTokenMessage(
             deployer.getSender(),
             toNano('0.05')
@@ -201,33 +202,14 @@ describe('SpongeFunJettonPublicSale', () => {
             user2.getSender(),
             toNano('1.1')
         );
-        await spongeFunJettonPublicSale.sendBuyTokenMessage(
-            user2.getSender(),
-            toNano('1.1')
-        );
         const afterBalance = await user2JettonWallet.getJettonBalance();
-        expect(afterBalance).toEqual(toNano("4") * BigInt(100000000));
+        expect(afterBalance).toEqual(toNano('3') * BigInt(100000000));
 
         const publicSaleContractWallet = await userWallet(spongeFunJettonPublicSale.address);
         const publicSaleContractBalance = await publicSaleContractWallet.getJettonBalance();
-        expect(publicSaleContractBalance).toEqual(toNano("300000000"));
+        expect(publicSaleContractBalance).toEqual(TOTAL_SUPPLY * BigInt(TEAM_PERCENTAGE + LP_PERCENTAGE) / BigInt(DENOMINATOR));
 
-        expect(await spongeFunJettonPublicSale.getTotalSale()).toEqual(toNano("400000000"));
-
-        let treasury: SandboxContract<TreasuryContract> = await blockchain.treasury('treasury');
-        let treasuryWallet = await userWallet(treasury.address);
-        const res = await spongeFunJettonPublicSale.sendMintToTreasuryMessage(
-            deployer.getSender(),
-            toNano('0.05'),
-            treasury.address
-        );
-        expect(res.transactions).toHaveTransaction({
-            from: deployer.address,
-            on: spongeFunJettonPublicSale.address,
-            success: true
-        });
-        const treasuryBalance = await treasuryWallet.getJettonBalance();
-        expect(treasuryBalance).toEqual(toNano("120000000"));
+        expect(await spongeFunJettonPublicSale.getTotalSale()).toEqual(TOTAL_SUPPLY * BigInt(PUBLIC_SALE_PERCENTAGE) / BigInt(DENOMINATOR));
 
         let team: SandboxContract<TreasuryContract> = await blockchain.treasury('team');
         let teamWallet = await userWallet(team.address);
@@ -242,7 +224,7 @@ describe('SpongeFunJettonPublicSale', () => {
             success: true
         });
         const teamBalance = await teamWallet.getJettonBalance();
-        expect(teamBalance).toEqual(toNano("100000000"));
+        expect(teamBalance).toEqual(TOTAL_SUPPLY * BigInt(TEAM_PERCENTAGE) / BigInt(DENOMINATOR));
 
         let lp: SandboxContract<TreasuryContract> = await blockchain.treasury('lp');
         let lpWallet = await userWallet(lp.address);
@@ -257,11 +239,11 @@ describe('SpongeFunJettonPublicSale', () => {
             success: true
         });
         const lpBalance = await lpWallet.getJettonBalance();
-        expect(lpBalance).toEqual(toNano("80000000"));
+        expect(lpBalance).toEqual(TOTAL_SUPPLY * BigInt(LP_PERCENTAGE) / BigInt(DENOMINATOR));
     });
 
-    it('can not send mintToTreasury message before sold out', async () => {
-        const res = await spongeFunJettonPublicSale.sendMintToTreasuryMessage(
+    it('can not send mintToTeam message before sold out', async () => {
+        const res = await spongeFunJettonPublicSale.sendMintToTeamMessage(
             deployer.getSender(),
             toNano('0.05'),
             user.address

@@ -9,6 +9,7 @@ import { SpongeFunJettonAirdrop } from '../wrappers/SpongeFunJettonAirdrop';
 import { jettonContentToCell, SpongeFunJettonMinter } from '../wrappers/SpongeFunJettonMinter';
 import { SpongeFunJettonPublicSale } from '../wrappers/SpongeFunJettonPublicSale';
 import { Errors } from '../wrappers/JettonConstants';
+import { DENOMINATOR, TEAM_PERCENTAGE, TOTAL_SUPPLY } from '../wrappers/JettonConstants';
 
 
 let blockchain: Blockchain;
@@ -21,6 +22,7 @@ let spongeFunAirdropContract: SandboxContract<SpongeFunJettonAirdrop>;
 let spongeFunJettonPublicSale: SandboxContract<SpongeFunJettonPublicSale>;
 let spongeFunJettonVestingLockup: SandboxContract<SpongeFunJettonVestingLockup>;
 let jwallet_code: Cell;
+let team_amount: bigint;
 
 let userWallet: (address: Address) => Promise<SandboxContract<SpongeFunJettonWallet>>;
 
@@ -109,16 +111,15 @@ describe('SpongeFunJettonVestingLockup', () => {
         await spongeFunJettonVestingLockup.sendDeploy(deployer.getSender(), toNano('0.05'));
 
         //mint all token to airdrop contract
-        const allTokenAmount = toNano("1000000000");
         await spongeFunJettonMinter.sendMintToClaimAirdropMessage(
             deployer.getSender(),
             spongeFunAirdropContract.address,
-            allTokenAmount,
+            TOTAL_SUPPLY,
             null, null, null
         );
         //claim airdrop
         const claimAmount = toNano("100000000");
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < 3; i++) {
             await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
                 user.getSender(),
                 i,
@@ -136,14 +137,14 @@ describe('SpongeFunJettonVestingLockup', () => {
             spongeFunJettonPublicSale.address
         );
         //sold out
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 3; i++) {
             await spongeFunJettonPublicSale.sendBuyTokenMessage(
                 user2.getSender(),
                 toNano('1.1')
             );
         }
 
-        await spongeFunJettonPublicSale.sendMintToTreasuryMessage(
+        await spongeFunJettonPublicSale.sendMintToTeamMessage(
             deployer.getSender(),
             toNano('0.05'),
             spongeFunJettonVestingLockup.address
@@ -151,7 +152,8 @@ describe('SpongeFunJettonVestingLockup', () => {
 
         let treasuryWallet = await userWallet(spongeFunJettonVestingLockup.address);
         const treasuryBalance = await treasuryWallet.getJettonBalance();
-        expect(treasuryBalance).toEqual(toNano("120000000"));
+        expect(treasuryBalance).toEqual(TOTAL_SUPPLY * BigInt(TEAM_PERCENTAGE) / BigInt(DENOMINATOR));
+        team_amount = TOTAL_SUPPLY * BigInt(TEAM_PERCENTAGE) / BigInt(DENOMINATOR)
     });
 
     it('should deploy', async () => {
@@ -222,12 +224,12 @@ describe('SpongeFunJettonVestingLockup', () => {
             success: true,
         });
         const deployerBalance = await deployerWallet.getJettonBalance();
-        expect(deployerBalance).toEqual(toNano("12000000"));
-        expect(await spongeFunJettonVestingLockup.getAlreadyUnlockAmount()).toEqual(toNano("12000000"));
+        expect(deployerBalance).toEqual(team_amount/BigInt(10));
+        expect(await spongeFunJettonVestingLockup.getAlreadyUnlockAmount()).toEqual(team_amount/BigInt(10));
 
         let treasuryWallet = await userWallet(spongeFunJettonVestingLockup.address);
         const treasuryBalance = await treasuryWallet.getJettonBalance();
-        expect(treasuryBalance).toEqual(toNano("108000000"));
+        expect(treasuryBalance).toEqual(team_amount * BigInt(9) / BigInt(10));
 
         blockchain.now = now + 650;
         await spongeFunJettonVestingLockup.sendVestingLockupMessage(
@@ -235,10 +237,10 @@ describe('SpongeFunJettonVestingLockup', () => {
             toNano('0.05')
         )
         const deployerBalance1 = await deployerWallet.getJettonBalance();
-        expect(deployerBalance1).toEqual(toNano("60000000"));
-        expect(await spongeFunJettonVestingLockup.getAlreadyUnlockAmount()).toEqual(toNano("60000000"));
+        expect(deployerBalance1).toEqual(team_amount * BigInt(5) / BigInt(10));
+        expect(await spongeFunJettonVestingLockup.getAlreadyUnlockAmount()).toEqual(team_amount * BigInt(5) / BigInt(10));
         const treasuryBalance1 = await treasuryWallet.getJettonBalance();
-        expect(treasuryBalance1).toEqual(toNano("60000000"));
+        expect(treasuryBalance1).toEqual(team_amount * BigInt(5) / BigInt(10));
 
         blockchain.now = now + 1150;
         await spongeFunJettonVestingLockup.sendVestingLockupMessage(
@@ -246,8 +248,8 @@ describe('SpongeFunJettonVestingLockup', () => {
             toNano('0.05')
         )
         const deployerBalance2 = await deployerWallet.getJettonBalance();
-        expect(deployerBalance2).toEqual(toNano("120000000"));
-        expect(await spongeFunJettonVestingLockup.getAlreadyUnlockAmount()).toEqual(toNano("120000000"));
+        expect(deployerBalance2).toEqual(team_amount);
+        expect(await spongeFunJettonVestingLockup.getAlreadyUnlockAmount()).toEqual(team_amount);
         const treasuryBalance2 = await treasuryWallet.getJettonBalance();
         expect(treasuryBalance2).toEqual(toNano("0"));
     });
