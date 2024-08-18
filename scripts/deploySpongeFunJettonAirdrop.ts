@@ -5,10 +5,14 @@ import { mnemonicNew, mnemonicToPrivateKey, KeyPair } from 'ton-crypto';
 import { jettonContentToCell, SpongeFunJettonMinter } from '../wrappers/SpongeFunJettonMinter';
 import { promptUserFriendlyAddress } from '../wrappers/ui-utils';
 import * as dotenv from 'dotenv'
+import { exit } from 'process';
 dotenv.config()
 
 async function getKp() {
-    let mnemonics = process.env.MNEMONICS ? process.env.MNEMONICS.split(' ') : await mnemonicNew();
+    if (!process.env.MNEMONICS) {
+        exit(1)
+    }
+    let mnemonics = process.env.MNEMONICS.split(' ');
     return mnemonicToPrivateKey(mnemonics);
 }
 
@@ -26,7 +30,7 @@ export async function run(provider: NetworkProvider) {
                     mintable: true,
                     admin_address: adminAddress.address,
                     jetton_wallet_code: jwallet_code,
-                    jetton_content: jettonContentToCell({uri: "https://ygytkyoysropdzezabwz.supabase.co/storage/v1/object/public/mini-app-public/SpongeFunCoin.json"})
+                    jetton_content: jettonContentToCell({uri: "https://ahmjtzedkhprhxljkapi.supabase.co/storage/v1/object/public/mini-app-public/SpongeBobCoin.json"})
                 },
                 await compile('SpongeFunJettonMinter')
         ));

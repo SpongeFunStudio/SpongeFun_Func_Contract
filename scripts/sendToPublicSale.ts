@@ -7,8 +7,8 @@ dotenv.config()
 
 export async function run(provider: NetworkProvider) {
     const ui = provider.ui();
-    const publicSaleContractAddress = Address.parse('EQBJng9IbS3-7wNtL2stCZA8SdqsdFrkn49jVqrrSRvLGAf5');
-    const jettonAirdropAddress = Address.parse('EQA1SlXAI8ZFKkBuKCIocdwy0MR76y8i66yCP9CGBhB7pIFb');
+    const publicSaleContractAddress = Address.parse('');
+    const jettonAirdropAddress = Address.parse('');
 
     try {
         const spongeFunJettonAirdrop = provider.open(

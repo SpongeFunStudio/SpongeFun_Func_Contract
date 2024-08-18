@@ -15,10 +15,11 @@ export async function run(provider: NetworkProvider) {
                     mintable: true,
                     admin_address: adminAddress.address,
                     jetton_wallet_code: jwallet_code,
-                    jetton_content: jettonContentToCell({uri: "https://jettonowner.com/jetton.json"})
+                    jetton_content: jettonContentToCell({uri: "https://ahmjtzedkhprhxljkapi.supabase.co/storage/v1/object/public/mini-app-public/SpongeBobCoin.json"})
                 },
                 await compile('SpongeFunJettonMinter')
         ));
+    console.log(spongeFunJettonMinter.address)
     const spongeFunJettonPublicSale = provider.open(SpongeFunJettonPublicSale.createFromConfig({
         sponge_fun_minter_address: spongeFunJettonMinter.address,
         admin_address: adminAddress.address,

@@ -84,7 +84,7 @@ global cell claimed_hashmap;
         throw_unless(error::repeat_signature, success == 0); ;; Revert if the sequence number of the incoming message does not match the stored sequence number
 
         int msg_seqno = master_msg_slice~load_uint(32);
-        ;;airdrop contract hold all token first, but just 35% can be claimed, than send 65% token to public sale contract after more than 1/2 of airdrop tokens are claimed
+        ;;airdrop contract hold all token first, but just 50% can be claimed, than send 50% token to public sale contract after more than 4/5 of airdrop tokens are claimed
         int claim_amount = master_msg_slice~load_coins();
         if(claim_amount > MAX_SUPPLY * AIRDRP_PERCENTAGE / DENOMINATOR - total_claimed){
             claim_amount = MAX_SUPPLY * AIRDRP_PERCENTAGE / DENOMINATOR - total_claimed;
