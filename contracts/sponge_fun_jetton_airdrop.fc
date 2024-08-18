@@ -133,10 +133,10 @@ global cell claimed_hashmap;
     if (op == op::mint_to_public_sale_contract) {
         throw_unless(error::not_owner, equal_slices_bits(sender_address, admin_address));
 
-        ;; only can start public sale stage when 1/2 of airdrop tokens are claimed
+        ;; only can start public sale stage when 4/5 of airdrop tokens are claimed
         throw_unless(
             error::can_not_start_public_sale, 
-            total_claimed >= MAX_SUPPLY * AIRDRP_PERCENTAGE / (2 * DENOMINATOR)
+            total_claimed >= (MAX_SUPPLY * AIRDRP_PERCENTAGE * 4) / (5 * DENOMINATOR)
         );
         slice public_sale_contract_address = in_msg_body~load_msg_addr();
         check_same_workchain(public_sale_contract_address);

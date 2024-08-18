@@ -105,7 +105,7 @@ describe('SpongeFunJettonPublicSale', () => {
         });
 
         const claimAmount = toNano("100000000");
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 4; i++) {
             await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
                 user.getSender(),
                 i,
@@ -155,7 +155,7 @@ describe('SpongeFunJettonPublicSale', () => {
 
         const userJettonWallet = await userWallet(user.address);
         const beforeBalance = await userJettonWallet.getJettonBalance();
-        expect(beforeBalance).toEqual(toNano("300000000"));
+        expect(beforeBalance).toEqual(toNano("400000000"));
 
         const res1 = await spongeFunJettonPublicSale.sendBuyTokenMessage(
             user.getSender(),

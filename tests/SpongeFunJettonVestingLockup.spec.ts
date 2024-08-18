@@ -119,7 +119,7 @@ describe('SpongeFunJettonVestingLockup', () => {
         );
         //claim airdrop
         const claimAmount = toNano("100000000");
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 4; i++) {
             await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
                 user.getSender(),
                 i,

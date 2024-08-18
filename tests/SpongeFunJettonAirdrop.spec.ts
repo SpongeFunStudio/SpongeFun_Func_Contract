@@ -250,7 +250,7 @@ describe('SpongeFunJettonAirdrop', () => {
         });
     });
 
-    it('should failed to mint_to_public_sale_contract before 1/2 airdrop token be claimed', async () => {
+    it('should failed to mint_to_public_sale_contract before 4/5 airdrop token be claimed', async () => {
         const res2 = await spongeFunAirdropContract.sendMintToPublicSaleContractMessage(
             deployer.getSender(),
             public_sale_contract.address
@@ -276,13 +276,13 @@ describe('SpongeFunJettonAirdrop', () => {
         });
     });
 
-    it('should success to mint_to_public_sale_contract after 1/2 airdrop token be claimed', async () => {
+    it('should success to mint_to_public_sale_contract after 4/5 airdrop token be claimed', async () => {
         const claimAmount = toNano("100000000");
         const userJettonWallet = await userWallet(user.address);
         const res0 = await spongeFunAirdropContract.getAirdropStatus();
         expect(res0.total_claimed).toEqual(0n);
 
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 4; i++) {
             const res = await spongeFunAirdropContract.sendClaimAirdropTokenMessage(
                 user.getSender(),
                 i,
