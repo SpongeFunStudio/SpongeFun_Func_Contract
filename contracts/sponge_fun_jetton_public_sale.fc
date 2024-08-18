@@ -62,7 +62,7 @@ global cell jetton_wallet_code;
         check_same_workchain(sender_address);
         throw_unless(error::sale_not_start, start_sale);
 
-        int ton_for_transfer_msg = 50000000; ;; 0.05 ton for transfer token message
+        int ton_for_transfer_msg = 100000000; ;; 0.1 ton for transfer token message
         int buy_amount = msg_value - ton_for_transfer_msg;
         throw_unless(error::msg_value_not_enough, buy_amount > 0);
 
