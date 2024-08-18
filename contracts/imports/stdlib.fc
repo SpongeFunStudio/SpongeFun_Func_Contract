@@ -806,7 +806,7 @@ const int PUBLIC_SALE_PERCENTAGE = 3000;
 const int TEAM_PERCENTAGE = 1200;
 const int LP_PERCENTAGE = 800;
 const int MAX_SUPPLY = 1000000000000000000;
-const int RATE = 100000000;
+const int RATE = 1500;
 
 ;; According to the guideline, it is recommended to start the body of the internal message with uint32 op and uint64 query_id
 
