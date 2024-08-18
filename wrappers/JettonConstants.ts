@@ -3,6 +3,7 @@ import { toNano } from "@ton/core";
 export const TOTAL_SUPPLY = toNano("1000000000");
 export const DENOMINATOR = 10000;
 export const AIRDRP_PERCENTAGE = 5000;
+export const RATE = 100000000;  //1500;
 export const PUBLIC_SALE_PERCENTAGE = 3000;
 export const TEAM_PERCENTAGE = 1200;
 export const LP_PERCENTAGE = 800;

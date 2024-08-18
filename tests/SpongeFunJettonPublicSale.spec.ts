@@ -7,7 +7,7 @@ import { jettonContentToCell, SpongeFunJettonMinter } from '../wrappers/SpongeFu
 import { SpongeFunJettonAirdrop } from '../wrappers/SpongeFunJettonAirdrop';
 import { SpongeFunJettonWallet } from '../wrappers/SpongeFunJettonWallet';
 import { mnemonicNew, mnemonicToPrivateKey, KeyPair } from 'ton-crypto';
-import { Errors, Op } from '../wrappers/JettonConstants';
+import { Errors, Op, RATE } from '../wrappers/JettonConstants';
 import { AIRDRP_PERCENTAGE, DENOMINATOR, LP_PERCENTAGE, PUBLIC_SALE_PERCENTAGE, TEAM_PERCENTAGE, TOTAL_SUPPLY } from '../wrappers/JettonConstants';
 
 
@@ -167,7 +167,7 @@ describe('SpongeFunJettonPublicSale', () => {
             success: true,
         });
         const afterBalance = await userJettonWallet.getJettonBalance();
-        expect(afterBalance).toEqual(beforeBalance + toNano("1") * BigInt(100000000));
+        expect(afterBalance).toEqual(beforeBalance + toNano("1") * BigInt(RATE));
     });
 
     it('not a admin can not send mintToTeam message', async () => {
